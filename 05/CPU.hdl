@@ -6,23 +6,23 @@
 /**
  * The Hack CPU (Central Processing unit), consisting of an ALU,
  * two registers named A and D, and a program counter named PC.
- * The CPU is designed to fetch and execute instructions written in 
+ * The CPU is designed to fetch and execute instructions written in
  * the Hack machine language. In particular, functions as follows:
- * Executes the inputted instruction according to the Hack machine 
+ * Executes the inputted instruction according to the Hack machine
  * language specification. The D and A in the language specification
  * refer to CPU-resident registers, while M refers to the external
- * memory location addressed by A, i.e. to Memory[A]. The inM input 
- * holds the value of this location. If the current instruction needs 
- * to write a value to M, the value is placed in outM, the address 
- * of the target location is placed in the addressM output, and the 
- * writeM control bit is asserted. (When writeM==0, any value may 
- * appear in outM). The outM and writeM outputs are combinational: 
- * they are affected instantaneously by the execution of the current 
- * instruction. The addressM and pc outputs are clocked: although they 
- * are affected by the execution of the current instruction, they commit 
- * to their new values only in the next time step. If reset==1 then the 
- * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather 
- * than to the address resulting from executing the current instruction. 
+ * memory location addressed by A, i.e. to Memory[A]. The inM input
+ * holds the value of this location. If the current instruction needs
+ * to write a value to M, the value is placed in outM, the address
+ * of the target location is placed in the addressM output, and the
+ * writeM control bit is asserted. (When writeM==0, any value may
+ * appear in outM). The outM and writeM outputs are combinational:
+ * they are affected instantaneously by the execution of the current
+ * instruction. The addressM and pc outputs are clocked: although they
+ * are affected by the execution of the current instruction, they commit
+ * to their new values only in the next time step. If reset==1 then the
+ * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather
+ * than to the address resulting from executing the current instruction.
  */
 
 CHIP CPU {
@@ -34,10 +34,54 @@ CHIP CPU {
                          // the current program (reset==0).
 
     OUT outM[16],        // M value output
-        writeM,          // Write to M? 
+        writeM,          // Write to M?
         addressM[15],    // Address in data memory (of M)
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+    /*
+     * Decoder
+     */
+    // mapping
+    Or16(a=instruction, b=false, out[15]=cInst,
+         out[0..14]=value,
+         out[12]=addr,
+         out[11]=compZx, out[10]=compNx, out[9]=compZy, out[8]=compNy, out[7]=compF, out[6]=compNo,
+         out[5]=destA, out[4]=destD, out[3]=destM, out[2]=jumpNg, out[1]=jumpZr, out[0]=jumpPs);
+    Not(in=cInst, out=aInst);
+    // load pin
+    Or(a=aInst, b=destA, out=aRegLoad);
+    And(a=cInst, b=destD, out=dRegLoad);
+    And(a=cInst, b=destM, out=writeM);
+    // jump
+    And(a=aluNg, b=jumpNg, out=loadPc0);
+    And(a=aluZr, b=jumpZr, out=loadPc1);
+    Or(a=aluNg, b=aluZr, out=aluZN);
+    Not(in=aluZN, out=aluPs);
+    And(a=aluPs, b=jumpPs, out=loadPc2);
+    Or8Way(in[0]=loadPc0, in[1]=loadPc1, in[2]=loadPc2, out=loadPc3);
+    And(a=cInst, b=loadPc3, out=loadPc);
+
+
+    /*
+     * A-register
+     */
+    Mux16(a=aluOut, b[0..14]=value, b[15]=false, sel=aInst, out=aRegIn);
+    ARegister(in=aRegIn,load=aRegLoad, out=aReg, out[0..14]=addressM);
+    Mux16(a=aReg, b=inM, sel=addr, out=aRegAddr);
+
+    /*
+     * D-register
+     */
+    DRegister(in=aluOut,load=dRegLoad, out=dReg);
+
+    /*
+     * ALU
+     */
+    ALU(x=dReg, y=aRegAddr, zx=compZx, nx=compNx, zy=compZy, ny=compNy, f=compF, no=compNo, out=aluOut, out=outM, zr=aluZr, ng=aluNg);
+
+    /*
+     * Program Counter and Fetch logit
+     */
+    PC(in=aReg, load=loadPc, inc=true, reset=reset, out[0..14]=pc);
 }
