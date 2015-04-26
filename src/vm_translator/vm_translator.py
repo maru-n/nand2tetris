@@ -14,21 +14,30 @@ if __name__ == '__main__':
 
     while parser.has_more_commands():
         parser.advance()
-        #print '#' + parser.current_line
+        print '#' + parser.current_line
+        print parser.command_type()
         if parser.command_type() == 'C_ARITHEMTIC':
             command = parser.arg1()
             code_writer.write_arithemetic(command)
-        elif parser.command_type() in ['C_PUSH', 'C_POP']:
-            command = parser.command_type()
+
+        elif parser.command_type() == 'C_PUSH':
             segment = parser.arg1()
             index = parser.arg2()
-            code_writer.write_push_pop(command, segment, index)
+            code_writer.write_push(segment, index)
+
+        elif parser.command_type() == 'C_POP':
+            segment = parser.arg1()
+            index = parser.arg2()
+            code_writer.write_pop(segment, index)
+
         elif parser.command_type() == 'C_LABEL':
             label = parser.arg1()
             code_writer.write_label(label)
+
         elif parser.command_type() == 'C_GOTO':
             label = parser.arg1()
             code_writer.write_goto(label)
+
         elif parser.command_type() == 'C_IF':
             label = parser.arg1()
             code_writer.write_if(label)

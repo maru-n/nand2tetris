@@ -65,47 +65,81 @@ class CodeWriter(object):
             self.__write_asm_code('D=!D')
             self.__write_asm_push_from_d_register()
 
-    def write_push_pop(self, command, segment, index):
-        if command == 'C_PUSH':
+    def write_push(self, segment, index):
             if segment == 'constant':
                 self.__write_asm_code('@' + index)
                 self.__write_asm_code('D=A')
                 self.__write_asm_push_from_d_register()
-            elif segment == 'local':
-                self.__write_asm_push_from_base_addr_register('LCL', index)
+            return
+
+        if segment in ['local', 'argument', 'this', 'that', 'temp', 'pointer']:
+            if segment == 'local':
+                self.__write_asm_code('@LCL')
+                self.__write_asm_code('D=M')
             elif segment == 'argument':
-                self.__write_asm_push_from_base_addr_register('ARG', index)
+                self.__write_asm_code('@ARG')
+                self.__write_asm_code('D=M')
             elif segment == 'this':
-                self.__write_asm_push_from_base_addr_register('THIS', index)
+                self.__write_asm_code('@THIS')
+                self.__write_asm_code('D=M')
             elif segment == 'that':
-                self.__write_asm_push_from_base_addr_register('THAT', index)
+                self.__write_asm_code('@THAT')
+                self.__write_asm_code('D=M')
             elif segment == 'temp':
-                self.__write_asm_push_from_base_addr('5', index)
+                self.__write_asm_code('@5')
+                self.__write_asm_code('D=A')
             elif segment == 'pointer':
-                self.__write_asm_push_from_base_addr('3', index)
-            elif segment == 'static':
+                self.__write_asm_code('@3')
+                self.__write_asm_code('D=A')
+            self.__write_asm_code('@' + index)
+            self.__write_asm_code('A=D+A')
+            self.__write_asm_code('D=M')
+            self.__write_asm_push_from_d_register()
+            return
+
+        if segment == 'static':
                 static_symbol = self.__vmname + '.' + str(index)
                 self.__write_asm_code('@'+static_symbol)
                 self.__write_asm_code('D=M')
                 self.__write_asm_push_from_d_register()
-        elif command == 'C_POP':
+            return
+
+    def write_pop(self, segment, index):
+        if segment in ['local', 'argument', 'this', 'that', 'temp', 'pointer']:
             if segment == 'local':
-                self.__write_asm_pop_to_base_addr_register('LCL', index)
+                self.__write_asm_code('@LCL')
+                self.__write_asm_code('D=M')
             elif segment == 'argument':
-                self.__write_asm_pop_to_base_addr_register('ARG', index)
+                self.__write_asm_code('@ARG')
+                self.__write_asm_code('D=M')
             elif segment == 'this':
-                self.__write_asm_pop_to_base_addr_register('THIS', index)
+                self.__write_asm_code('@THIS')
+                self.__write_asm_code('D=M')
             elif segment == 'that':
-                self.__write_asm_pop_to_base_addr_register('THAT', index)
+                self.__write_asm_code('@THAT')
+                self.__write_asm_code('D=M')
             elif segment == 'temp':
-                self.__write_asm_pop_to_base_addr('5', index)
+                self.__write_asm_code('@5')
+                self.__write_asm_code('D=A')
             elif segment == 'pointer':
-                self.__write_asm_pop_to_base_addr('3', index)
-            elif segment == 'static':
+                self.__write_asm_code('@3')
+                self.__write_asm_code('D=A')
+            self.__write_asm_code('@' + index)
+            self.__write_asm_code('D=D+A')
+            self.__write_asm_code('@R13')
+            self.__write_asm_code('M=D')
+            self.__write_asm_pop_to_d_register()
+            self.__write_asm_code('@R13')
+            self.__write_asm_code('A=M')
+            self.__write_asm_code('M=D')
+            return
+
+        if segment == 'static':
                 static_symbol = self.__vmname + '.' + str(index)
                 self.__write_asm_pop_to_d_register()
                 self.__write_asm_code('@'+static_symbol)
                 self.__write_asm_code('M=D')
+            return
 
     def write_label(self, label):
         self.__write_asm_label(label)
@@ -132,50 +166,6 @@ class CodeWriter(object):
         symbol = 'GLOBAL_SYMBOL_' + str(self.__global_line_symbol_index)
         self.__global_line_symbol_index += 1
         return symbol
-
-    def __write_asm_push_from_base_addr_register(self,
-                                                 base_addr_register,
-                                                 index):
-        self.__write_asm_code('@' + base_addr_register)
-        self.__write_asm_code('D=M')
-        self.__write_asm_code('@' + index)
-        self.__write_asm_code('A=D+A')
-        self.__write_asm_code('D=M')
-        self.__write_asm_push_from_d_register()
-
-    def __write_asm_pop_to_base_addr_register(self,
-                                              base_addr_register,
-                                              index):
-        self.__write_asm_code('@' + base_addr_register)
-        self.__write_asm_code('D=M')
-        self.__write_asm_code('@' + index)
-        self.__write_asm_code('D=D+A')
-        self.__write_asm_code('@R13')
-        self.__write_asm_code('M=D')
-        self.__write_asm_pop_to_d_register()
-        self.__write_asm_code('@R13')
-        self.__write_asm_code('A=M')
-        self.__write_asm_code('M=D')
-
-    def __write_asm_push_from_base_addr(self, base_addr, index):
-        self.__write_asm_code('@' + base_addr)
-        self.__write_asm_code('D=A')
-        self.__write_asm_code('@' + index)
-        self.__write_asm_code('A=D+A')
-        self.__write_asm_code('D=M')
-        self.__write_asm_push_from_d_register()
-
-    def __write_asm_pop_to_base_addr(self, base_addr, index):
-        self.__write_asm_code('@' + base_addr)
-        self.__write_asm_code('D=A')
-        self.__write_asm_code('@' + index)
-        self.__write_asm_code('D=D+A')
-        self.__write_asm_code('@R13')
-        self.__write_asm_code('M=D')
-        self.__write_asm_pop_to_d_register()
-        self.__write_asm_code('@R13')
-        self.__write_asm_code('A=M')
-        self.__write_asm_code('M=D')
 
     def __write_asm_push_boolean_by_ifelse(self, condition_asm_code):
         if_symbol = self.__get_new_jmp_symbol()
