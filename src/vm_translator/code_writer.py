@@ -111,10 +111,13 @@ class CodeWriter(object):
         self.__write_asm_label(label)
 
     def write_goto(self, label):
-        pass
+        self.__write_asm_code('@' + label)
+        self.__write_asm_code('0;JMP')
 
     def write_if(self, label):
-        pass
+        self.__write_asm_pop_to_d_register()
+        self.__write_asm_code('@' + label)
+        self.__write_asm_code('D;JNE')
 
     def write_call(self, function_name, num_args):
         pass

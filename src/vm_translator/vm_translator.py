@@ -23,5 +23,14 @@ if __name__ == '__main__':
             segment = parser.arg1()
             index = parser.arg2()
             code_writer.write_push_pop(command, segment, index)
+        elif parser.command_type() == 'C_LABEL':
+            label = parser.arg1()
+            code_writer.write_label(label)
+        elif parser.command_type() == 'C_GOTO':
+            label = parser.arg1()
+            code_writer.write_goto(label)
+        elif parser.command_type() == 'C_IF':
+            label = parser.arg1()
+            code_writer.write_if(label)
 
     code_writer.close()
