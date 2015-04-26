@@ -157,10 +157,53 @@ class CodeWriter(object):
         pass
 
     def write_return(self):
-        pass
+        # R13 = return value
+        self.__write_asm_pop_to_d_register()
+        self.__write_asm_code('@R13')
+        self.__write_asm_code('M=D')
+        # R14 = ARG
+        self.__write_asm_symbol_assignment('R14', 'ARG')
+        # SP = LCL
+        self.__write_asm_symbol_assignment('SP', 'LCL')
+        # set environment of return function
+        self.__write_asm_pop_to_d_register()
+        self.__write_asm_code('@THAT')
+        self.__write_asm_code('M=D')
+        self.__write_asm_pop_to_d_register()
+        self.__write_asm_code('@THIS')
+        self.__write_asm_code('M=D')
+        self.__write_asm_pop_to_d_register()
+        self.__write_asm_code('@ARG')
+        self.__write_asm_code('M=D')
+        self.__write_asm_pop_to_d_register()
+        self.__write_asm_code('@LCL')
+        self.__write_asm_code('M=D')
+        # R15 = return address
+        self.__write_asm_pop_to_d_register()
+        self.__write_asm_code('@R15')
+        self.__write_asm_code('M=D')
+        # SP = R14
+        self.__write_asm_symbol_assignment('SP', 'R14')
+        # set return value
+        self.__write_asm_code('@R13')
+        self.__write_asm_code('D=M')
+        self.__write_asm_push_from_d_register()
+        # return code
+        self.__write_asm_code('@R13')
+        self.__write_asm_code('A=M')
+        self.__write_asm_code('0;JMP')
 
     def write_function(self, function_name, num_locals):
-        pass
+        self.__write_asm_label(function_name)
+        for i in range(num_locals):
+            self.write_push('constant', '0')
+
+    def __write_asm_symbol_assignment(self, symbol1, symbol2):
+        # symbol1 = symbol2
+        self.__write_asm_code('@' + symbol2)
+        self.__write_asm_code('D=M')
+        self.__write_asm_code('@' + symbol1)
+        self.__write_asm_code('M=D')
 
     def __get_new_jmp_symbol(self):
         symbol = 'GLOBAL_SYMBOL_' + str(self.__global_line_symbol_index)

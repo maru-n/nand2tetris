@@ -14,8 +14,7 @@ if __name__ == '__main__':
 
     while parser.has_more_commands():
         parser.advance()
-        print '#' + parser.current_line
-        print parser.command_type()
+
         if parser.command_type() == 'C_ARITHEMTIC':
             command = parser.arg1()
             code_writer.write_arithemetic(command)
@@ -41,5 +40,13 @@ if __name__ == '__main__':
         elif parser.command_type() == 'C_IF':
             label = parser.arg1()
             code_writer.write_if(label)
+
+        elif parser.command_type() == 'C_FUNCTION':
+            function_name = parser.arg1()
+            num_locals = int(parser.arg2())
+            code_writer.write_function(function_name, num_locals)
+
+        elif parser.command_type() == 'C_RETURN':
+            code_writer.write_return()
 
     code_writer.close()
