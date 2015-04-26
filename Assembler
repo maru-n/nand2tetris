@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+binary_path=`dirname $0`
+python ${binary_path}/src/assembler/assembler.py $@
