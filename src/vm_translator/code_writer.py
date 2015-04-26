@@ -158,36 +158,22 @@ class CodeWriter(object):
 
     def write_return(self):
         # R13 = return value
-        self.__write_asm_pop_to_d_register()
-        self.__write_asm_code('@R13')
-        self.__write_asm_code('M=D')
+        self.__write_asm_pop_to_symbol('R13')
         # R14 = ARG
         self.__write_asm_symbol_assignment('R14', 'ARG')
         # SP = LCL
         self.__write_asm_symbol_assignment('SP', 'LCL')
         # set environment of return function
-        self.__write_asm_pop_to_d_register()
-        self.__write_asm_code('@THAT')
-        self.__write_asm_code('M=D')
-        self.__write_asm_pop_to_d_register()
-        self.__write_asm_code('@THIS')
-        self.__write_asm_code('M=D')
-        self.__write_asm_pop_to_d_register()
-        self.__write_asm_code('@ARG')
-        self.__write_asm_code('M=D')
-        self.__write_asm_pop_to_d_register()
-        self.__write_asm_code('@LCL')
-        self.__write_asm_code('M=D')
+        self.__write_asm_pop_to_symbol('THAT')
+        self.__write_asm_pop_to_symbol('THIS')
+        self.__write_asm_pop_to_symbol('ARG')
+        self.__write_asm_pop_to_symbol('LCL')
         # R15 = return address
-        self.__write_asm_pop_to_d_register()
-        self.__write_asm_code('@R15')
-        self.__write_asm_code('M=D')
+        self.__write_asm_pop_to_symbol('R15')
         # SP = R14
         self.__write_asm_symbol_assignment('SP', 'R14')
         # set return value
-        self.__write_asm_code('@R13')
-        self.__write_asm_code('D=M')
-        self.__write_asm_push_from_d_register()
+        self.__write_asm_push_from_symbol('R13')
         # return code
         self.__write_asm_code('@R13')
         self.__write_asm_code('A=M')
@@ -225,6 +211,23 @@ class CodeWriter(object):
         self.__write_asm_label(end_symbol)
         self.__write_asm_push_from_d_register()
 
+    def __write_asm_push_from_symbol(self, symbol):
+        self.__write_asm_code('@' + symbol)
+        self.__write_asm_code('D=M')
+        self.__write_asm_push_from_d_register()
+
+    def __write_asm_push_from_d_register(self):
+        self.__write_asm_code('@SP')
+        self.__write_asm_code('A=M')
+        self.__write_asm_code('M=D')
+        self.__write_asm_code('@SP')
+        self.__write_asm_code('M=M+1')
+
+    def __write_asm_pop_to_symbol(self, symbol):
+        self.__write_asm_pop_to_d_register()
+        self.__write_asm_code('@' + symbol)
+        self.__write_asm_code('M=D')
+
     def __write_asm_pop_to_a_register(self):
         self.__write_asm_code('@SP')
         self.__write_asm_code('AM=M-1')
@@ -234,13 +237,6 @@ class CodeWriter(object):
         self.__write_asm_code('@SP')
         self.__write_asm_code('AM=M-1')
         self.__write_asm_code('D=M')
-
-    def __write_asm_push_from_d_register(self):
-        self.__write_asm_code('@SP')
-        self.__write_asm_code('A=M')
-        self.__write_asm_code('M=D')
-        self.__write_asm_code('@SP')
-        self.__write_asm_code('M=M+1')
 
     def __write_asm_label(self, label):
         self.__write_asm_code('(' + label + ')')
