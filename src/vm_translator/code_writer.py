@@ -17,6 +17,9 @@ class CodeWriter(object):
     def close(self):
         self.__file.close()
 
+    def write_init(self):
+        pass
+
     def write_arithemetic(self, command):
         if command == 'add':
             self.__write_asm_pop_to_d_register()
@@ -103,6 +106,24 @@ class CodeWriter(object):
                 self.__write_asm_pop_to_d_register()
                 self.__write_asm_code('@'+static_symbol)
                 self.__write_asm_code('M=D')
+
+    def write_label(self, label):
+        self.__write_asm_label(label)
+
+    def write_goto(self, label):
+        pass
+
+    def write_if(self, label):
+        pass
+
+    def write_call(self, function_name, num_args):
+        pass
+
+    def write_return(self):
+        pass
+
+    def write_function(self, function_name, num_locals):
+        pass
 
     def __get_new_jmp_symbol(self):
         symbol = 'GLOBAL_SYMBOL_' + str(self.__global_line_symbol_index)

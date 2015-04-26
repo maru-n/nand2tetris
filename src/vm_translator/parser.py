@@ -10,6 +10,12 @@ class Parser(object):
                            'and', 'or', 'not']
     PUSH_COMMAND = 'push'
     POP_COMMAND = 'pop'
+    LABEL_COMMAND = 'label'
+    GOTO_COMMAND = 'goto'
+    IF_COMMAND = 'if-goto'
+    FUNCTION_COMMAND = 'function'
+    CALL_COMMAND = 'call'
+    RETURN_COMMAND = 'return'
 
     def __init__(self, file_name):
         super(Parser, self).__init__()
@@ -46,13 +52,20 @@ class Parser(object):
             return 'C_PUSH'
         elif command == Parser.POP_COMMAND:
             return 'C_POP'
-
-        return 'C_LABEL'
-        return 'C_GOTO'
-        return 'C_IF'
-        return 'C_FUNCTION'
-        return 'C_RETURN'
-        return 'C_CALL'
+        elif command == Parser.LABEL_COMMAND:
+            return 'C_LABEL'
+        elif command == Parser.GOTO_COMMAND:
+            return 'C_GOTO'
+        elif command == Parser.IF_COMMAND:
+            return 'C_IF'
+        elif command == Parser.FUNCTION_COMMAND:
+            return 'C_FUNCTION'
+        elif command == Parser.RETURN_COMMAND:
+            return 'C_RETURN'
+        elif command == Parser.CALL_COMMAND:
+            return 'C_CALL'
+        else:
+            raise Exception("unrecognized command: " + command)
 
     def arg1(self):
         return self.__arg1
