@@ -14,6 +14,9 @@ class CodeWriter(object):
     def set_file_name(self, file_name):
         self.__file = open(file_name, 'w')
 
+    def close(self):
+        self.__file.close()
+
     def write_arithemetic(self, command):
         if command == 'add':
             self.__write_asm_pop_to_d_register()
@@ -184,6 +187,3 @@ class CodeWriter(object):
 
     def __write_asm_code(self, asm_code):
         self.__file.write(asm_code + '\n')
-
-    def close(self):
-        self.__file.close()
