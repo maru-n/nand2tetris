@@ -182,11 +182,11 @@ class CodeWriter(object):
         self.__write_asm_code('D=0')
         self.__write_asm_code('@' + end_symbol)
         self.__write_asm_code('0;JMP')
-        self.__write_asm_code('(' + if_symbol + ')')
+        self.__write_asm_label(if_symbol)
         self.__write_asm_code('D=-1')
         self.__write_asm_code('@' + end_symbol)
         self.__write_asm_code('0;JMP')
-        self.__write_asm_code('(' + end_symbol + ')')
+        self.__write_asm_label(end_symbol)
         self.__write_asm_push_from_d_register()
 
     def __write_asm_pop_to_a_register(self):
@@ -205,6 +205,9 @@ class CodeWriter(object):
         self.__write_asm_code('M=D')
         self.__write_asm_code('@SP')
         self.__write_asm_code('M=M+1')
+
+    def __write_asm_label(self, label):
+        self.__write_asm_code('(' + label + ')')
 
     def __write_asm_code(self, asm_code):
         self.__file.write(asm_code + '\n')
