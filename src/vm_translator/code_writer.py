@@ -62,9 +62,9 @@ class CodeWriter(object):
             self.__write_asm_code('A=M-1')
             self.__write_asm_code('M=D|M')
         elif command == 'not':
-            self.__write_asm_pop_to_d_register()
-            self.__write_asm_code('D=!D')
-            self.__write_asm_push_from_d_register()
+            self.__write_asm_code('@SP')
+            self.__write_asm_code('A=M-1')
+            self.__write_asm_code('M=!M')
 
     def write_push(self, segment, index):
         if segment == 'constant':
