@@ -9,6 +9,7 @@ class CodeWriter(object):
         super(CodeWriter, self).__init__()
         self.set_file_name(file_name)
         self.__vmname = path.splitext(path.basename(file_name))[0]
+        self.__fname = ""
         self.__global_line_symbol_index = 0
 
     def set_file_name(self, file_name):
@@ -18,7 +19,8 @@ class CodeWriter(object):
         self.__file.close()
 
     def write_init(self):
-        pass
+        self.__write_asm_value_assignment('SP', 256)
+        self.write_call('Sys.init', 0)
 
     def write_arithemetic(self, command):
         if command == 'add':
@@ -66,10 +68,10 @@ class CodeWriter(object):
             self.__write_asm_push_from_d_register()
 
     def write_push(self, segment, index):
-            if segment == 'constant':
-                self.__write_asm_code('@' + index)
-                self.__write_asm_code('D=A')
-                self.__write_asm_push_from_d_register()
+        if segment == 'constant':
+            self.__write_asm_code('@' + index)
+            self.__write_asm_code('D=A')
+            self.__write_asm_push_from_d_register()
             return
 
         if segment in ['local', 'argument', 'this', 'that', 'temp', 'pointer']:
@@ -98,10 +100,10 @@ class CodeWriter(object):
             return
 
         if segment == 'static':
-                static_symbol = self.__vmname + '.' + str(index)
-                self.__write_asm_code('@'+static_symbol)
-                self.__write_asm_code('D=M')
-                self.__write_asm_push_from_d_register()
+            static_symbol = self.__vmname + '.' + str(index)
+            self.__write_asm_code('@'+static_symbol)
+            self.__write_asm_code('D=M')
+            self.__write_asm_push_from_d_register()
             return
 
     def write_pop(self, segment, index):
@@ -135,60 +137,78 @@ class CodeWriter(object):
             return
 
         if segment == 'static':
-                static_symbol = self.__vmname + '.' + str(index)
-                self.__write_asm_pop_to_d_register()
-                self.__write_asm_code('@'+static_symbol)
-                self.__write_asm_code('M=D')
+            static_symbol = self.__vmname + '.' + str(index)
+            self.__write_asm_pop_to_d_register()
+            self.__write_asm_code('@'+static_symbol)
+            self.__write_asm_code('M=D')
             return
 
     def write_label(self, label):
-        self.__write_asm_label(label)
+        self.__write_asm_label(self.__get_function_inner_label(label))
 
     def write_goto(self, label):
-        self.__write_asm_code('@' + label)
+        self.__write_asm_code('@' + self.__get_function_inner_label(label))
         self.__write_asm_code('0;JMP')
 
     def write_if(self, label):
         self.__write_asm_pop_to_d_register()
-        self.__write_asm_code('@' + label)
+        self.__write_asm_code('@' + self.__get_function_inner_label(label))
         self.__write_asm_code('D;JNE')
 
     def write_call(self, function_name, num_args):
-        pass
+        return_address = self.__get_new_jmp_symbol()
+        self.__write_asm_code('@' + return_address)
+        self.__write_asm_code('D=A')
+        self.__write_asm_push_from_d_register()  # push return-address
+        self.__write_asm_push_from_symbol('LCL')
+        self.__write_asm_push_from_symbol('ARG')
+        self.__write_asm_push_from_symbol('THIS')
+        self.__write_asm_push_from_symbol('THAT')
+        self.__write_asm_push_from_symbol('SP')
+        self.write_push('constant', str(num_args))
+        self.write_arithemetic('sub')
+        self.write_push('constant', '5')
+        self.write_arithemetic('sub')
+        self.__write_asm_pop_to_symbol('ARG')
+        self.__write_asm_symbol_assignment('LCL', 'SP')
+        self.__write_asm_code('@' + function_name)
+        self.__write_asm_code('0;JMP')
+        self.__write_asm_label(return_address)
 
     def write_return(self):
-        # R13 = return value
-        self.__write_asm_pop_to_symbol('R13')
-        # R14 = ARG
-        self.__write_asm_symbol_assignment('R14', 'ARG')
-        # SP = LCL
+        self.__write_asm_pop_to_symbol('R13')  # return value
+        self.__write_asm_symbol_assignment('R14', 'ARG')  # return SP point
         self.__write_asm_symbol_assignment('SP', 'LCL')
-        # set environment of return function
         self.__write_asm_pop_to_symbol('THAT')
         self.__write_asm_pop_to_symbol('THIS')
         self.__write_asm_pop_to_symbol('ARG')
         self.__write_asm_pop_to_symbol('LCL')
-        # R15 = return address
-        self.__write_asm_pop_to_symbol('R15')
-        # SP = R14
+        self.__write_asm_pop_to_symbol('R15')  # return address
         self.__write_asm_symbol_assignment('SP', 'R14')
-        # set return value
         self.__write_asm_push_from_symbol('R13')
-        # return code
-        self.__write_asm_code('@R13')
+        self.__write_asm_code('@R15')
         self.__write_asm_code('A=M')
         self.__write_asm_code('0;JMP')
 
     def write_function(self, function_name, num_locals):
+        self.__fname = function_name
         self.__write_asm_label(function_name)
         for i in range(num_locals):
             self.write_push('constant', '0')
 
-    def __write_asm_symbol_assignment(self, symbol1, symbol2):
-        # symbol1 = symbol2
-        self.__write_asm_code('@' + symbol2)
+    def __get_function_inner_label(self, label):
+        return self.__fname + '$' + label
+
+    def __write_asm_symbol_assignment(self, dst_symbol, src_target):
+        self.__write_asm_code('@' + src_target)
         self.__write_asm_code('D=M')
-        self.__write_asm_code('@' + symbol1)
+        self.__write_asm_code('@' + dst_symbol)
+        self.__write_asm_code('M=D')
+
+    def __write_asm_value_assignment(self, dst_symbol, value):
+        self.__write_asm_code('@' + str(value))
+        self.__write_asm_code('D=A')
+        self.__write_asm_code('@' + dst_symbol)
         self.__write_asm_code('M=D')
 
     def __get_new_jmp_symbol(self):

@@ -1,17 +1,13 @@
 #!/usr/bin/env python
 
 import sys
+import glob
 from os import path
 from parser import Parser
 from code_writer import CodeWriter
 
-if __name__ == '__main__':
-    src_fname = sys.argv[1]
-    asm_fname = path.splitext(src_fname)[0] + ".asm"
 
-    parser = Parser(src_fname)
-    code_writer = CodeWriter(asm_fname)
-
+def parse_and_write(parser, code_writer):
     while parser.has_more_commands():
         parser.advance()
 
@@ -48,5 +44,31 @@ if __name__ == '__main__':
 
         elif parser.command_type() == 'C_RETURN':
             code_writer.write_return()
+
+        elif parser.command_type() == 'C_CALL':
+            function_name = parser.arg1()
+            num_args = int(parser.arg2())
+            code_writer.write_call(function_name, num_args)
+
+
+if __name__ == '__main__':
+    input_file = sys.argv[1]
+
+    if path.isfile(input_file):
+        src_files = [input_file]
+        asm_file = path.splitext(input_file)[0] + ".asm"
+    else:
+        src_files = glob.glob(path.join(sys.argv[1], '*.vm'))
+        asm_file = path.split(input_file.rstrip('/') + ".asm")[1]
+        asm_file = path.join(input_file, asm_file)
+
+    code_writer = CodeWriter(asm_file)
+
+    if len(src_files) != 1:
+        code_writer.write_init()
+
+    for src_file in src_files:
+        parser = Parser(src_file)
+        parse_and_write(parser, code_writer)
 
     code_writer.close()
