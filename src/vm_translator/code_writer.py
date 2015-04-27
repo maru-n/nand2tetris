@@ -24,18 +24,18 @@ class CodeWriter(object):
     def write_arithemetic(self, command):
         if command == 'add':
             self.__write_asm_pop_to_d_register()
-            self.__write_asm_pop_to_a_register()
-            self.__write_asm_code('D=D+A')
-            self.__write_asm_push_from_d_register()
+            self.__write_asm_code('@SP')
+            self.__write_asm_code('A=M-1')
+            self.__write_asm_code('M=D+M')
         elif command == 'sub':
             self.__write_asm_pop_to_d_register()
-            self.__write_asm_pop_to_a_register()
-            self.__write_asm_code('D=A-D')
-            self.__write_asm_push_from_d_register()
+            self.__write_asm_code('@SP')
+            self.__write_asm_code('A=M-1')
+            self.__write_asm_code('M=M-D')
         elif command == 'neg':
-            self.__write_asm_pop_to_d_register()
-            self.__write_asm_code('D=-D')
-            self.__write_asm_push_from_d_register()
+            self.__write_asm_code('@SP')
+            self.__write_asm_code('A=M-1')
+            self.__write_asm_code('M=-M')
         elif command == 'eq':
             self.__write_asm_pop_to_d_register()
             self.__write_asm_pop_to_a_register()
@@ -53,14 +53,14 @@ class CodeWriter(object):
             self.__write_asm_push_boolean_by_ifelse('D;JLT')
         elif command == 'and':
             self.__write_asm_pop_to_d_register()
-            self.__write_asm_pop_to_a_register()
-            self.__write_asm_code('D=D&A')
-            self.__write_asm_push_from_d_register()
+            self.__write_asm_code('@SP')
+            self.__write_asm_code('A=M-1')
+            self.__write_asm_code('M=D&M')
         elif command == 'or':
             self.__write_asm_pop_to_d_register()
-            self.__write_asm_pop_to_a_register()
-            self.__write_asm_code('D=D|A')
-            self.__write_asm_push_from_d_register()
+            self.__write_asm_code('@SP')
+            self.__write_asm_code('A=M-1')
+            self.__write_asm_code('M=D|M')
         elif command == 'not':
             self.__write_asm_pop_to_d_register()
             self.__write_asm_code('D=!D')
@@ -168,9 +168,7 @@ class CodeWriter(object):
         # ARG = SP-n-5
         self.__write_asm_code('@SP')
         self.__write_asm_code('D=M')
-        self.__write_asm_code('@' + str(num_args))
-        self.__write_asm_code('D=D-A')
-        self.__write_asm_code('@5')
+        self.__write_asm_code('@' + str(num_args+5))
         self.__write_asm_code('D=D-A')
         self.__write_asm_code('@ARG')
         self.__write_asm_code('M=D')
