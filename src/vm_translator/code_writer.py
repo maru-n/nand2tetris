@@ -155,21 +155,28 @@ class CodeWriter(object):
         self.__write_asm_code('D;JNE')
 
     def write_call(self, function_name, num_args):
+        # push return-address
         return_address = self.__get_new_jmp_symbol()
         self.__write_asm_code('@' + return_address)
         self.__write_asm_code('D=A')
-        self.__write_asm_push_from_d_register()  # push return-address
+        self.__write_asm_push_from_d_register()
+        # set up environment
         self.__write_asm_push_from_symbol('LCL')
         self.__write_asm_push_from_symbol('ARG')
         self.__write_asm_push_from_symbol('THIS')
         self.__write_asm_push_from_symbol('THAT')
-        self.__write_asm_push_from_symbol('SP')
-        self.write_push('constant', str(num_args))
-        self.write_arithemetic('sub')
-        self.write_push('constant', '5')
-        self.write_arithemetic('sub')
-        self.__write_asm_pop_to_symbol('ARG')
+        # ARG = SP-n-5
+        self.__write_asm_code('@SP')
+        self.__write_asm_code('D=M')
+        self.__write_asm_code('@' + str(num_args))
+        self.__write_asm_code('D=D-A')
+        self.__write_asm_code('@5')
+        self.__write_asm_code('D=D-A')
+        self.__write_asm_code('@ARG')
+        self.__write_asm_code('M=D')
+        # LCL = SP
         self.__write_asm_symbol_assignment('LCL', 'SP')
+        # goto function
         self.__write_asm_code('@' + function_name)
         self.__write_asm_code('0;JMP')
         self.__write_asm_label(return_address)
