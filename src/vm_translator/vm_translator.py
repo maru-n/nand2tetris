@@ -7,7 +7,9 @@ from parser import Parser
 from code_writer import CodeWriter
 
 
-def parse_and_write(parser, code_writer):
+def parse_and_write(code_writer, src_vm_file):
+    parser = Parser(src_vm_file)
+    code_writer.set_file_name(src_vm_file)
     while parser.has_more_commands():
         parser.advance()
 
@@ -55,20 +57,19 @@ if __name__ == '__main__':
     input_file = sys.argv[1]
 
     if path.isfile(input_file):
-        src_files = [input_file]
+        src_vm_files = [input_file]
         asm_file = path.splitext(input_file)[0] + ".asm"
     else:
-        src_files = glob.glob(path.join(sys.argv[1], '*.vm'))
+        src_vm_files = glob.glob(path.join(sys.argv[1], '*.vm'))
         asm_file = path.split(input_file.rstrip('/') + ".asm")[1]
         asm_file = path.join(input_file, asm_file)
 
     code_writer = CodeWriter(asm_file)
 
-    if len(src_files) != 1:
+    if len(src_vm_files) != 1:
         code_writer.write_init()
 
-    for src_file in src_files:
-        parser = Parser(src_file)
-        parse_and_write(parser, code_writer)
+    for src_vm_file in src_vm_files:
+        parse_and_write(code_writer, src_vm_file)
 
     code_writer.close()

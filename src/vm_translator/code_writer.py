@@ -7,13 +7,12 @@ class CodeWriter(object):
 
     def __init__(self, file_name):
         super(CodeWriter, self).__init__()
-        self.set_file_name(file_name)
-        self.__vmname = path.splitext(path.basename(file_name))[0]
-        self.__fname = ""
+        self.__file = open(file_name, 'w')
         self.__global_line_symbol_index = 0
 
     def set_file_name(self, file_name):
-        self.__file = open(file_name, 'w')
+        self.__class_name = path.splitext(path.basename(file_name))[0]
+        self.__function_name = ""
 
     def close(self):
         self.__file.close()
@@ -100,7 +99,7 @@ class CodeWriter(object):
             return
 
         if segment == 'static':
-            static_symbol = self.__vmname + '.' + str(index)
+            static_symbol = self.__class_name + '.' + str(index)
             self.__write_asm_code('@'+static_symbol)
             self.__write_asm_code('D=M')
             self.__write_asm_push_from_d_register()
@@ -137,7 +136,7 @@ class CodeWriter(object):
             return
 
         if segment == 'static':
-            static_symbol = self.__vmname + '.' + str(index)
+            static_symbol = self.__class_name + '.' + str(index)
             self.__write_asm_pop_to_d_register()
             self.__write_asm_code('@'+static_symbol)
             self.__write_asm_code('M=D')
@@ -191,13 +190,13 @@ class CodeWriter(object):
         self.__write_asm_code('0;JMP')
 
     def write_function(self, function_name, num_locals):
-        self.__fname = function_name
+        self.__function_name = function_name
         self.__write_asm_label(function_name)
         for i in range(num_locals):
             self.write_push('constant', '0')
 
     def __get_function_inner_label(self, label):
-        return self.__fname + '$' + label
+        return self.__function_name + '$' + label
 
     def __write_asm_symbol_assignment(self, dst_symbol, src_target):
         self.__write_asm_code('@' + src_target)
