@@ -54,12 +54,12 @@ class CodeWriter(object):
         elif command == 'and':
             self.__write_asm_pop_to_d_register()
             self.__write_asm_pop_to_a_register()
-            self.__write_asm_code('D=A&D')
+            self.__write_asm_code('D=D&A')
             self.__write_asm_push_from_d_register()
         elif command == 'or':
             self.__write_asm_pop_to_d_register()
             self.__write_asm_pop_to_a_register()
-            self.__write_asm_code('D=A|D')
+            self.__write_asm_code('D=D|A')
             self.__write_asm_push_from_d_register()
         elif command == 'not':
             self.__write_asm_pop_to_d_register()
