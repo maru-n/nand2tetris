@@ -1,3 +1,8 @@
 #!/usr/bin/env sh
+if [ $# -ne 1 ]; then
+  echo 'Usage:'
+  echo 'Assembler prog.asm'
+  exit 1
+fi
 binary_path=`dirname $0`
 python ${binary_path}/src/assembler/assembler.py $@

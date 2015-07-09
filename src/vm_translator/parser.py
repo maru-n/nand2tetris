@@ -23,7 +23,7 @@ class Parser(object):
         # remove comment and blank lines
         self.__lines = map(
             lambda l: re.sub(r'//.*|^\s*|\n', '', l), self.__lines)
-        self.__lines = filter(lambda l: l, self.__lines)
+        self.__lines = list(filter(lambda l: l, self.__lines))
         self.__current_line_idx = -1
 
     @property
