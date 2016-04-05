@@ -3,14 +3,12 @@
 import sys
 import glob
 from os import path
-from jack_tokenizer import JackTokenizer
+from compilation_engine import CompilationEngine
 
 
-def analyze(src_jack_file):
-    tokenizer = JackTokenizer(src_jack_file)
-    while tokenizer.has_more_tokens():
-        tokenizer.advance()
-        print(tokenizer.get_current_token())
+def analyze(src_jack_file, output):
+    compilation_engine = CompilationEngine(src_jack_file, output)
+    compilation_engine.compile()
 
 
 if __name__ == '__main__':
@@ -22,4 +20,6 @@ if __name__ == '__main__':
         src_jack_files = glob.glob(path.join(sys.argv[1], '*.jack'))
 
     for src_jack_file in src_jack_files:
-        analyze(src_jack_file)
+        #output = sys.stdout
+        output = open(path.splitext(src_jack_file)[0] + "T2.xml", 'w')
+        analyze(src_jack_file, output)
