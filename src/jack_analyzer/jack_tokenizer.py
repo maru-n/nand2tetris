@@ -41,7 +41,7 @@ class JackTokenizer(object):
         self.__current_line_idx += 1
 
     def token_type(self):
-        token = self.__get_current_token()
+        token = self.get_current_token()
         if re.match(RE_KEYWORD, token):
             return 'KEYWORD'
         elif re.match(RE_SYMBOL, token):
@@ -56,19 +56,19 @@ class JackTokenizer(object):
             raise Exception("unrecognizable token: " + token)
 
     def key_word(self):
-        return self.__get_current_token()
+        return self.get_current_token()
 
     def symbol(self):
-        return self.__get_current_token()
+        return self.get_current_token()
 
     def identifier(self):
-        return self.__get_current_token()
+        return self.get_current_token()
 
     def int_val(self):
-        return int(self.__get_current_token())
+        return int(self.get_current_token())
 
     def string_val(self):
-        return self.__get_current_token().replace("\"", "")
+        return self.get_current_token().replace("\"", "")
 
-    def __get_current_token(self):
+    def get_current_token(self):
         return self.__tokens[self.__current_line_idx]
