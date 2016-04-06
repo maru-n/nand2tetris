@@ -9,7 +9,7 @@ https://mitpress.mit.edu/index.php?q=books/elements-computing-systems
 
 ### Chapter 1~5
 
-`01/` ~ `05`
+`01/` ~ `05/`
 
 ### Cahpter 6
 
@@ -25,8 +25,10 @@ skipped
 
 ### Chapter 10
 
-`src/jack_analyzer_xml/` and `JackAnalyzerXML`
+`src/jack_compiler/` and `JackAnalyzerXML`
 
-## Chapter 11 and after
+`./tools/check_10.sh` compare all generated *.xml files with originals on project 10.
+
+### Chapter 11 and after
 
 In progress!
