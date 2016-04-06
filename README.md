@@ -25,7 +25,7 @@ skipped
 
 ### Chapter 10
 
-`src/jack_analyzer/` and `JackAnalyzer`
+`src/jack_analyzer_xml/` and `JackAnalyzerXML`
 
 ## Chapter 11 and after
 
