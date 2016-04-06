@@ -25,7 +25,9 @@ skipped
 
 ### Chapter 10
 
-`src/jack_analyzer_xml/` and `JackAnalyzerXML`
+`src/jack_compiler/` and `JackAnalyzerXML`
+
+`./tools/check_10.sh` compare all generated *.xml files with originals on project 10.
 
 ## Chapter 11 and after
 
