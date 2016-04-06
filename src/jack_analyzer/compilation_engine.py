@@ -280,6 +280,7 @@ class CompilationEngine(object):
                 self.__compile_expression()
         self.__target.write('</expressionList>\n')
 
+
     """ Lexical elements """
     def __is_terminal(self, terminals=None, terminal_type=None):
         if isinstance(terminals, str):
@@ -289,7 +290,6 @@ class CompilationEngine(object):
         if terminal_type is not None and self.__tokenizer.token_type() is not terminal_type:
             return False
         return True
-
 
     def __compile_terminal(self, terminals=None, terminal_type=None):
         if not self.__is_terminal(terminals, terminal_type):
