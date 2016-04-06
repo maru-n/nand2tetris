@@ -17,7 +17,6 @@ def compile(src_jack_file, output):
     compilation_engine.compile()
 
 if __name__ == '__main__':
-
     input = sys.argv[1]
 
     if path.isfile(input):
@@ -31,5 +30,5 @@ if __name__ == '__main__':
             output = open(path.splitext(src_jack_file)[0] + ".xml", 'w')
             analyze(src_jack_file, output)
         else:
-            output = open(path.splitext(src_jack_file)[0] + ".vm", 'w')
+            output = open(path.splitext(src_jack_file)[0] + ".xml", 'w')
             compile(src_jack_file, output)

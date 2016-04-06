@@ -25,7 +25,6 @@ RE_ALL_TOKENIZE = RE_COMMENT + \
 
 
 class JackTokenizer(object):
-    """docstring for JackTokenizer"""
 
     def __init__(self, file_name):
         super(JackTokenizer, self).__init__()

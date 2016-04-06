@@ -1,9 +1,8 @@
 #!/usr/bin/env python
+
 from jack_tokenizer import JackTokenizer
 
 class CompilationEngine(object):
-
-    """docstring for CompilationEngine"""
 
     def __init__(self, src_jack_file, output):
         super(CompilationEngine, self).__init__()
