@@ -4,16 +4,18 @@ import sys
 import glob
 from os import path
 from compilation_engine import CompilationEngine
-
+from jack_tokenizer import JackTokenizer
 
 def analyze(src_jack_file, output):
     print(src_jack_file)
-    compilation_engine = CompilationEngine(src_jack_file, output)
+    tokenizer = JackTokenizer(src_jack_file)
+    compilation_engine = CompilationEngine(tokenizer, output)
     compilation_engine.compile()
 
 def compile(src_jack_file, output):
     print(src_jack_file)
-    compilation_engine = CompilationEngine(src_jack_file, output)
+    tokenizer = JackTokenizer(src_jack_file)
+    compilation_engine = CompilationEngine(tokenizer, output)
     compilation_engine.compile()
 
 if __name__ == '__main__':

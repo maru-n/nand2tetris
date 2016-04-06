@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-from jack_tokenizer import JackTokenizer
 
 class CompilationEngine(object):
 
-    def __init__(self, src_jack_file, output):
+    def __init__(self, tokenizer, output):
         super(CompilationEngine, self).__init__()
         self.__target = output
-        self.__tokenizer = JackTokenizer(src_jack_file)
+        self.__tokenizer = tokenizer
 
 
     def compile(self):
