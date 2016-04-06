@@ -1,9 +1,0 @@
-#!/usr/bin/env sh
-if [ $# -ne 1 ]; then
-  echo 'Usage:'
-  echo 'JackAnalyzer source.jack'
-  echo 'JackAnalyzer source_directory'
-  exit 1
-fi
-binary_path=`dirname $0`
-python ${binary_path}/src/jack_analyzer_xml/jack_analyzer.py $@
