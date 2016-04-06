@@ -9,7 +9,7 @@ https://mitpress.mit.edu/index.php?q=books/elements-computing-systems
 
 ### Chapter 1~5
 
-`01/` ~ `05`
+`01/` ~ `05/`
 
 ### Cahpter 6
 
