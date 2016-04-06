@@ -7,6 +7,7 @@ from compilation_engine import CompilationEngine
 
 
 def analyze(src_jack_file, output):
+    print(src_jack_file, '...')
     compilation_engine = CompilationEngine(src_jack_file, output)
     compilation_engine.compile()
 
@@ -21,5 +22,5 @@ if __name__ == '__main__':
 
     for src_jack_file in src_jack_files:
         #output = sys.stdout
-        output = open(path.splitext(src_jack_file)[0] + ".xml.new", 'w')
+        output = open(path.splitext(src_jack_file)[0] + ".new.xml", 'w')
         analyze(src_jack_file, output)
