@@ -6,4 +6,4 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 binary_path=`dirname $0`
-python ${binary_path}/src/jack_compiler/jack_compiler.py $@ -a
+python ${binary_path}/src/jack_compiler/jack_compiler.py $@
