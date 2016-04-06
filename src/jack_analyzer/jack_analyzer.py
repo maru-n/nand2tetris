@@ -7,7 +7,7 @@ from compilation_engine import CompilationEngine
 
 
 def analyze(src_jack_file, output):
-    print(src_jack_file, '...')
+    print(src_jack_file)
     compilation_engine = CompilationEngine(src_jack_file, output)
     compilation_engine.compile()
 
