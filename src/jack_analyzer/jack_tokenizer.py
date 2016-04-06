@@ -72,3 +72,6 @@ class JackTokenizer(object):
 
     def get_current_token(self):
         return self.__tokens[self.__current_line_idx]
+
+    def get_next_token(self):
+        return self.__tokens[self.__current_line_idx+1]

@@ -22,5 +22,5 @@ if __name__ == '__main__':
 
     for src_jack_file in src_jack_files:
         #output = sys.stdout
-        output = open(path.splitext(src_jack_file)[0] + ".new.xml", 'w')
+        output = open(path.splitext(src_jack_file)[0] + ".xml", 'w')
         analyze(src_jack_file, output)

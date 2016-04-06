@@ -26,8 +26,8 @@ class CompilationEngine(object):
         self.__compile_terminal('{')
         while self.__is_class_var_dec():
             self.__compile_class_var_dec()
-        while self.__is_subroutine():
-            self.__compile_subroutine()
+        while self.__is_subroutine_dec():
+            self.__compile_subroutine_dec()
         self.__compile_terminal('}')
         self.__target.write('</class>\n')
 
@@ -62,10 +62,10 @@ class CompilationEngine(object):
             self.__compile_class_name()
 
 
-    def __is_subroutine(self):
+    def __is_subroutine_dec(self):
         return self.__is_terminal(['constructor', 'function', 'method'])
 
-    def __compile_subroutine(self):
+    def __compile_subroutine_dec(self):
         self.__target.write('<subroutineDec>\n')
         self.__compile_terminal(['constructor', 'function', 'method'])
         if self.__is_terminal('void'):
@@ -76,7 +76,7 @@ class CompilationEngine(object):
         self.__compile_terminal('(')
         self.__compile_parameter_list()
         self.__compile_terminal(')')
-        self.__compile_subroutine_body()
+        self.__compile_subroutine_dec_body()
         self.__target.write('</subroutineDec>\n')
 
 
@@ -92,7 +92,7 @@ class CompilationEngine(object):
         self.__target.write('</parameterList>\n')
 
 
-    def __compile_subroutine_body(self):
+    def __compile_subroutine_dec_body(self):
         self.__target.write('<subroutineBody>\n')
         self.__compile_terminal('{')
         while self.__is_var_dec():
@@ -130,6 +130,9 @@ class CompilationEngine(object):
     def __compile_subroutine_name(self):
         self.__compile_terminal(terminal_type='IDENTIFIER')
 
+
+    def __is_var_name(self):
+        return self.__is_terminal(terminal_type='IDENTIFIER')
 
     def __compile_var_name(self):
         self.__compile_terminal(terminal_type='IDENTIFIER')
@@ -250,18 +253,50 @@ class CompilationEngine(object):
         self.__compile_term()
         while self.__is_terminal(CompilationEngine.TERMINAL_OP):
             self.__compile_terminal(CompilationEngine.TERMINAL_OP)
-            self.__conpile_term()
+            self.__compile_term()
         self.__target.write('</expression>\n')
 
 
     def __is_term(self):
-        return not self.__is_terminal([')', ';'])
+        int_const = self.__is_terminal(terminal_type='INT_CONST')
+        str_const = self.__is_terminal(terminal_type='STRING_CONST')
+        kw_const = self.__is_terminal(CompilationEngine.TERMINAL_KEYWORD_CONSTANT)
+        var_array = self.__is_var_name()
+        sr_call = self.__is_subroutine_call()
+        group = self.__is_terminal('(')
+        anary_op = self.__is_terminal(CompilationEngine.TERMINAL_UNARY_OP)
+        return (int_const or str_const or kw_const or var_array or sr_call or group or anary_op)
 
     def __compile_term(self):
         self.__target.write('<term>\n')
-        self.__compile_terminal()
+        if self.__is_terminal(terminal_type='INT_CONST'):
+            self.__compile_terminal(terminal_type='INT_CONST')
+        elif self.__is_terminal(terminal_type='STRING_CONST'):
+            self.__compile_terminal(terminal_type='STRING_CONST')
+        elif self.__is_terminal(CompilationEngine.TERMINAL_KEYWORD_CONSTANT):
+            self.__compile_terminal(CompilationEngine.TERMINAL_KEYWORD_CONSTANT)
+        elif self.__is_subroutine_call():
+            self.__compile_subroutine_call()
+        elif self.__is_var_name():
+            self.__compile_var_name()
+            if self.__is_terminal('['):
+                self.__compile_terminal('[')
+                self.__compile_expression()
+                self.__compile_terminal(']')
+        elif self.__is_terminal('('):
+            self.__compile_terminal('(')
+            self.__compile_expression()
+            self.__compile_terminal(')')
+        elif self.__is_terminal(CompilationEngine.TERMINAL_UNARY_OP):
+            self.__compile_terminal(CompilationEngine.TERMINAL_UNARY_OP)
+            self.__compile_term()
         self.__target.write('</term>\n')
 
+
+    def __is_subroutine_call(self):
+        func = self.__is_subroutine_name() and self.__tokenizer.get_next_token() is "("
+        method = (self.__is_class_name() or self.__is_var_name()) and self.__tokenizer.get_next_token() is '.'
+        return func or method
 
     def __compile_subroutine_call(self):
         while not self.__is_terminal('('):
