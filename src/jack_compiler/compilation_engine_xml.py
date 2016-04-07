@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
 
-class CompilationEngine(object):
+class CompilationEngineXML(object):
 
-    def __init__(self, output, tokenizer, symbol_table):
-        super(CompilationEngine, self).__init__()
+    def __init__(self, output, tokenizer):
+        super(CompilationEngineXML, self).__init__()
         self.__target = output
         self.__tokenizer = tokenizer
-        self.__symbol_table = symbol_table
 
 
     def compile(self):
@@ -21,14 +20,9 @@ class CompilationEngine(object):
     def __compile_class(self):
         self.__target.write('<class>\n')
         self.__compile_terminal('class')
-        # className
-        self.__target.write('<class-defined>')
-        self.__target.write(self.__tokenizer.identifier())
-        self.__target.write('</class-defined>')
-        self.__target.write('\n')
-        self.__tokenizer.advance()
+        self.__compile_class_name()
         self.__compile_terminal('{')
-        while self.__current_terminal() in ['static', 'field']:
+        while self.__is_class_var_dec():
             self.__compile_class_var_dec()
         while self.__is_subroutine_dec():
             self.__compile_subroutine_dec()
@@ -36,20 +30,17 @@ class CompilationEngine(object):
         self.__target.write('</class>\n')
 
 
+    def __is_class_var_dec(self):
+        return self.__is_terminal(['static', 'field'])
+
     def __compile_class_var_dec(self):
         self.__target.write('<classVarDec>\n')
-        var_kind = self.__get_terminal()
         self.__compile_terminal(['static', 'field'])
-        var_type = self.__get_terminal()
         self.__compile_type()
-        var_name = self.__get_terminal()
         self.__compile_var_name()
-        self.__symbol_table.define(var_name, var_type, var_kind)
         while self.__is_terminal(','):
             self.__compile_terminal(',')
-            var_name = self.__get_terminal()
             self.__compile_var_name()
-            self.__symbol_table.define(var_name, var_type, var_kind)
         self.__compile_terminal(';')
         self.__target.write('</classVarDec>\n')
 
@@ -57,7 +48,7 @@ class CompilationEngine(object):
     def __is_type(self):
         if self.__is_terminal(['int', 'char', 'boolean']):
             return True
-        elif self.__is_terminal(terminal_type='IDENTIFIER'):  # class name
+        elif self.__is_class_name():
             return True
         else:
             return False
@@ -66,12 +57,7 @@ class CompilationEngine(object):
         if self.__is_terminal(['int', 'char', 'boolean']):
             self.__compile_terminal(['int', 'char', 'boolean'])
         else:
-            # className
-            self.__target.write('<class-use>')
-            self.__target.write(self.__tokenizer.identifier())
-            self.__target.write('</class-use>')
-            self.__target.write('\n')
-            self.__tokenizer.advance()
+            self.__compile_class_name()
 
 
     def __is_subroutine_dec(self):
@@ -84,10 +70,7 @@ class CompilationEngine(object):
             self.__compile_terminal('void')
         else:
             self.__compile_type()
-        self.__target.write('<subroutine-defined>')
-        self.__target.write(self.__tokenizer.identifier())
-        self.__target.write('</subroutine-defined>\n')
-        self.__tokenizer.advance()
+        self.__compile_subroutine_name()
         self.__compile_terminal('(')
         self.__compile_parameter_list()
         self.__compile_terminal(')')
@@ -124,18 +107,26 @@ class CompilationEngine(object):
         self.__target.write('<varDec>\n')
         self.__compile_terminal('var')
         self.__compile_type()
-        self.__target.write('<identifier>')
-        self.__target.write(self.__current_terminal())
-        self.__tokenizer.advance()
-        self.__target.write('</identifier>')
+        self.__compile_var_name()
         while self.__is_terminal(','):
             self.__compile_terminal(',')
-            self.__target.write('<identifier>')
-            self.__target.write(self.__current_terminal())
-            self.__tokenizer.advance()
-            self.__target.write('</identifier>')
+            self.__compile_var_name()
         self.__compile_terminal(';')
         self.__target.write('</varDec>\n')
+
+
+    def __is_class_name(self):
+        return self.__is_terminal(terminal_type='IDENTIFIER')
+
+    def __compile_class_name(self):
+        self.__compile_terminal(terminal_type='IDENTIFIER')
+
+
+    def __is_subroutine_name(self):
+        return self.__is_terminal(terminal_type='IDENTIFIER')
+
+    def __compile_subroutine_name(self):
+        self.__compile_terminal(terminal_type='IDENTIFIER')
 
 
     def __is_var_name(self):
@@ -154,21 +145,27 @@ class CompilationEngine(object):
 
 
     def __is_statement(self):
-        return self.__current_terminal() in ['let', 'if', 'while', 'do', 'return']
-
+        return self.__is_let_statement() or \
+            self.__is_if_statement() or \
+            self.__is_while_statement() or \
+            self.__is_do_statement() or \
+            self.__is_return_statement()
 
     def __compile_statement(self):
-        if self.__is_terminal('let'):
+        if self.__is_let_statement():
             self.__compile_let_statement()
-        elif self.__is_terminal('if'):
+        elif self.__is_if_statement():
             self.__compile_if_statement()
-        elif self.__is_terminal('while'):
+        elif self.__is_while_statement():
             self.__compile_while_statement()
-        elif self.__is_terminal('do'):
+        elif self.__is_do_statement():
             self.__compile_do_statement()
-        elif self.__is_terminal('return'):
+        elif self.__is_return_statement():
             self.__compile_return_statement()
 
+
+    def __is_let_statement(self):
+        return self.__is_terminal('let')
 
     def __compile_let_statement(self):
         self.__target.write('<letStatement>\n')
@@ -183,6 +180,9 @@ class CompilationEngine(object):
         self.__compile_terminal(';')
         self.__target.write('</letStatement>\n')
 
+
+    def __is_if_statement(self):
+        return self.__is_terminal('if')
 
     def __compile_if_statement(self):
         self.__target.write('<ifStatement>\n')
@@ -200,6 +200,8 @@ class CompilationEngine(object):
             self.__compile_terminal('}')
         self.__target.write('</ifStatement>\n')
 
+    def __is_while_statement(self):
+        return self.__is_terminal('while')
 
     def __compile_while_statement(self):
         self.__target.write('<whileStatement>\n')
@@ -213,6 +215,9 @@ class CompilationEngine(object):
         self.__target.write('</whileStatement>\n')
 
 
+    def __is_do_statement(self):
+        return self.__is_terminal('do')
+
     def __compile_do_statement(self):
         self.__target.write('<doStatement>\n')
         self.__compile_terminal('do')
@@ -220,6 +225,9 @@ class CompilationEngine(object):
         self.__compile_terminal(';')
         self.__target.write('</doStatement>\n')
 
+
+    def __is_return_statement(self):
+        return self.__is_terminal('return')
 
     def __compile_return_statement(self):
         self.__target.write('<returnStatement>\n')
@@ -241,8 +249,8 @@ class CompilationEngine(object):
     def __compile_expression(self):
         self.__target.write('<expression>\n')
         self.__compile_term()
-        while self.__is_terminal(CompilationEngine.TERMINAL_OP):
-            self.__compile_terminal(CompilationEngine.TERMINAL_OP)
+        while self.__is_terminal(CompilationEngineXML.TERMINAL_OP):
+            self.__compile_terminal(CompilationEngineXML.TERMINAL_OP)
             self.__compile_term()
         self.__target.write('</expression>\n')
 
@@ -250,11 +258,11 @@ class CompilationEngine(object):
     def __is_term(self):
         int_const = self.__is_terminal(terminal_type='INT_CONST')
         str_const = self.__is_terminal(terminal_type='STRING_CONST')
-        kw_const = self.__is_terminal(CompilationEngine.TERMINAL_KEYWORD_CONSTANT)
+        kw_const = self.__is_terminal(CompilationEngineXML.TERMINAL_KEYWORD_CONSTANT)
         var_array = self.__is_var_name()
         sr_call = self.__is_subroutine_call()
         group = self.__is_terminal('(')
-        anary_op = self.__is_terminal(CompilationEngine.TERMINAL_UNARY_OP)
+        anary_op = self.__is_terminal(CompilationEngineXML.TERMINAL_UNARY_OP)
         return (int_const or str_const or kw_const or var_array or sr_call or group or anary_op)
 
     def __compile_term(self):
@@ -263,8 +271,8 @@ class CompilationEngine(object):
             self.__compile_terminal(terminal_type='INT_CONST')
         elif self.__is_terminal(terminal_type='STRING_CONST'):
             self.__compile_terminal(terminal_type='STRING_CONST')
-        elif self.__is_terminal(CompilationEngine.TERMINAL_KEYWORD_CONSTANT):
-            self.__compile_terminal(CompilationEngine.TERMINAL_KEYWORD_CONSTANT)
+        elif self.__is_terminal(CompilationEngineXML.TERMINAL_KEYWORD_CONSTANT):
+            self.__compile_terminal(CompilationEngineXML.TERMINAL_KEYWORD_CONSTANT)
         elif self.__is_subroutine_call():
             self.__compile_subroutine_call()
         elif self.__is_var_name():
@@ -277,28 +285,20 @@ class CompilationEngine(object):
             self.__compile_terminal('(')
             self.__compile_expression()
             self.__compile_terminal(')')
-        elif self.__is_terminal(CompilationEngine.TERMINAL_UNARY_OP):
-            self.__compile_terminal(CompilationEngine.TERMINAL_UNARY_OP)
+        elif self.__is_terminal(CompilationEngineXML.TERMINAL_UNARY_OP):
+            self.__compile_terminal(CompilationEngineXML.TERMINAL_UNARY_OP)
             self.__compile_term()
         self.__target.write('</term>\n')
 
 
     def __is_subroutine_call(self):
-        is_func = self.__is_terminal(terminal_type='IDENTIFIER') and self.__tokenizer.get_next_token() is "("
-        is_method = self.__is_terminal(terminal_type='IDENTIFIER') and self.__tokenizer.get_next_token() is '.'
-        return (is_func or is_method)
+        func = self.__is_subroutine_name() and self.__tokenizer.get_next_token() is "("
+        method = (self.__is_class_name() or self.__is_var_name()) and self.__tokenizer.get_next_token() is '.'
+        return func or method
 
     def __compile_subroutine_call(self):
-        if self.__tokenizer.get_next_token() is ".":
-            self.__target.write('<class-use>')
-            self.__target.write(self.__tokenizer.identifier())
-            self.__target.write('</class-use>\n')
-            self.__tokenizer.advance()
-            self.__compile_terminal('.')
-        self.__target.write('<subroutine-use>')
-        self.__target.write(self.__tokenizer.identifier())
-        self.__target.write('</subroutine-use>\n')
-        self.__tokenizer.advance()
+        while not self.__is_terminal('('):
+            self.__compile_terminal()
         self.__compile_terminal('(')
         self.__compile_expression_list()
         self.__compile_terminal(')')
@@ -318,7 +318,7 @@ class CompilationEngine(object):
     def __is_terminal(self, terminals=None, terminal_type=None):
         if isinstance(terminals, str):
             terminals = [terminals]
-        if terminals and not self.__current_terminal() in terminals:
+        if terminals and not self.__tokenizer.get_current_token() in terminals:
             return False
         if terminal_type is not None and self.__tokenizer.token_type() is not terminal_type:
             return False
@@ -326,20 +326,17 @@ class CompilationEngine(object):
 
     def __compile_terminal(self, terminals=None, terminal_type=None):
         if not self.__is_terminal(terminals, terminal_type):
-            raise Exception('Invalid syntax: '+self.__current_terminal())
+            raise Exception('Invalid syntax: '+self.__tokenizer.get_current_token())
         self.__output_current_token()
         self.__tokenizer.advance()
 
-
-    def __current_terminal(self):
-        return self.__tokenizer.get_current_token()
 
     def __output_current_token(self):
         token_type = self.__tokenizer.token_type()
         if token_type == 'KEYWORD':
             self.__target.write('<keyword>')
             self.__target.write(self.__tokenizer.key_word())
-            self.__target.write('</keyword>\n')
+            self.__target.write('</keyword>')
         elif token_type == 'SYMBOL':
             self.__target.write('<symbol>')
             symbol = self.__tokenizer.symbol()
@@ -350,16 +347,17 @@ class CompilationEngine(object):
             elif symbol == '&':
                 symbol = '&amp;'
             self.__target.write(symbol)
-            self.__target.write('</symbol>\n')
+            self.__target.write('</symbol>')
         elif token_type == 'IDENTIFIER':
             self.__target.write('<identifier>')
             self.__target.write(self.__tokenizer.identifier())
-            self.__target.write('</identifier>\n')
+            self.__target.write('</identifier>')
         elif token_type == 'INT_CONST':
             self.__target.write('<integerConstant>')
             self.__target.write(str(self.__tokenizer.int_val()))
-            self.__target.write('</integerConstant>\n')
+            self.__target.write('</integerConstant>')
         elif token_type == 'STRING_CONST':
             self.__target.write('<stringConstant>')
             self.__target.write(self.__tokenizer.string_val())
-            self.__target.write('</stringConstant>\n')
+            self.__target.write('</stringConstant>')
+        self.__target.write('\n')

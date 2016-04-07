@@ -4,18 +4,21 @@ import sys
 import glob
 from os import path
 from compilation_engine import CompilationEngine
+from compilation_engine_xml import CompilationEngineXML
 from jack_tokenizer import JackTokenizer
+from symbol_table import SymbolTable
 
 def analyze(src_jack_file, output):
     print(src_jack_file)
     tokenizer = JackTokenizer(src_jack_file)
-    compilation_engine = CompilationEngine(tokenizer, output)
+    compilation_engine = CompilationEngineXML(output, tokenizer)
     compilation_engine.compile()
 
 def compile(src_jack_file, output):
     print(src_jack_file)
     tokenizer = JackTokenizer(src_jack_file)
-    compilation_engine = CompilationEngine(tokenizer, output)
+    symbol_table = SymbolTable()
+    compilation_engine = CompilationEngine(output, tokenizer, symbol_table)
     compilation_engine.compile()
 
 if __name__ == '__main__':
