@@ -28,10 +28,10 @@ class SymbolTable(object):
         kind = kind.upper()
         if kind in ['STATIC', 'FIELD']:
             self.__class_table[name] = SymbolTableRecord(name, type, kind, self.var_count(kind))
-        if kind in ['ARG', 'VAR']:
+        elif kind in ['ARG', 'VAR']:
             self.__subroutine_table[name] = SymbolTableRecord(name, type, kind, self.var_count(kind))
         else:
-            raise Exception('Invalid kind of identifier: ' + name)
+            raise Exception('Invalid kind of identifier. identifier:' + name + ' kind:' + kind)
         self.__increment_var_count(kind)
 
 
@@ -61,7 +61,7 @@ class SymbolTable(object):
             return None
 
 
-    def index_of(self, arg):
+    def index_of(self, name):
         if name in self.__class_table:
             return self.__class_table[name].index
         elif name in self.__subroutine_table:

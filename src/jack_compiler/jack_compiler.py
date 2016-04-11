@@ -4,22 +4,25 @@ import sys
 import glob
 from os import path
 from compilation_engine import CompilationEngine
-from compilation_engine_xml import CompilationEngineXML
 from jack_tokenizer import JackTokenizer
 from symbol_table import SymbolTable
+from vm_writer import VMWriter
 
 def analyze(src_jack_file, output):
     print(src_jack_file)
     tokenizer = JackTokenizer(src_jack_file)
-    compilation_engine = CompilationEngineXML(output, tokenizer)
-    compilation_engine.compile()
+    compilation_engine = CompilationEngine(tokenizer)
+    compilation_engine.analysis(output)
+
 
 def compile(src_jack_file, output):
     print(src_jack_file)
     tokenizer = JackTokenizer(src_jack_file)
     symbol_table = SymbolTable()
-    compilation_engine = CompilationEngine(output, tokenizer, symbol_table)
+    vm_writer = VMWriter(output)
+    compilation_engine = CompilationEngine(tokenizer, symbol_table, vm_writer)
     compilation_engine.compile()
+
 
 if __name__ == '__main__':
     input = sys.argv[1]
@@ -35,5 +38,6 @@ if __name__ == '__main__':
             output = open(path.splitext(src_jack_file)[0] + ".xml", 'w')
             analyze(src_jack_file, output)
         else:
-            output = open(path.splitext(src_jack_file)[0] + ".xml", 'w')
+            output = open(path.splitext(src_jack_file)[0] + ".vm", 'w')
             compile(src_jack_file, output)
+        output.close()
