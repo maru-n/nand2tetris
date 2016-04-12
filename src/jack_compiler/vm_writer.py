@@ -7,14 +7,28 @@ class VMWriter(object):
         super(VMWriter, self).__init__()
         self.__output = output
 
+
     def write_push(self, segment, index):
-        pass
+        self.__output.write('push ')
+        self.__output.write(segment + ' ')
+        self.__output.write(index)
+        self.__output.write('\n')
+
 
     def write_pop(self, segment, index):
-        pass
+        self.__output.write('pop ')
+        self.__output.write(segment + ' ')
+        self.__output.write(index)
+        self.__output.write('\n')
+
 
     def write_arithmetic(self, command):
-        pass
+        if command.lower() in ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']:
+            self.__output.write(command.lower())
+            self.__output.write('\n')
+        else:
+            raise Exception('Invalid VM command: ' + command)
+
 
     def write_label(self, label):
         pass
@@ -26,7 +40,12 @@ class VMWriter(object):
         pass
 
     def write_call(self, name, n_args):
-        pass
+        self.__output.write('call ')
+        self.__output.write(name)
+        self.__output.write(' ')
+        self.__output.write(str(n_args))
+        self.__output.write('\n')
+
 
     def write_function(self, name, n_locals):
         self.__output.write('function ')
@@ -34,5 +53,6 @@ class VMWriter(object):
         self.__output.write(str(n_locals))
         self.__output.write('\n')
 
+
     def write_return(self):
-        pass
+        self.__output.write('return\n')
