@@ -6,6 +6,8 @@ import os
 
 class CompilationEngine(object):
 
+    WRITE_METADATA = False  # for symbol table test on chapter 11
+
     def __init__(self, tokenizer, symbol_table=None, vm_writer=None):
         super(CompilationEngine, self).__init__()
         self._analysis = False
@@ -21,12 +23,14 @@ class CompilationEngine(object):
         self._compile_class()
         self._analysis = False
 
+
     def analysis(self, output):
         self._analysis = True
         self._analysis_output = output
         self.compile()
 
-    """ Program """
+
+    """ Compile Program """
     def _compile_class(self):
         self._analysis_write('<class>\n')
         self._get_and_advance_token('class')
@@ -53,9 +57,6 @@ class CompilationEngine(object):
         self._get_and_advance_token(';')
         self._analysis_write('</classVarDec>\n')
 
-    def _define_symbol(self, var_name, var_type, var_kind):
-        if self._symbol_table:
-            self._symbol_table.define(var_name, var_type, var_kind)
 
     def _compile_subroutine_dec(self):
         self._analysis_write('<subroutineDec>\n')
@@ -77,7 +78,7 @@ class CompilationEngine(object):
     def _compile_parameter_list(self):
         self._analysis_write('<parameterList>\n')
         param_cnt = 0
-        if self._current_token_is_type():
+        if self._get_current_token() != ')':
             var_type = self._get_token_as_var_type()
             var_name = self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="argument/defined")
             self._define_symbol(var_name, var_type, 'ARG')
@@ -99,9 +100,6 @@ class CompilationEngine(object):
         return var_type
 
 
-    def _current_token_is_type(self):
-        return self._get_current_token() in ['int', 'char', 'boolean'] or self._get_current_token_type() == 'IDENTIFIER'
-
     def _compile_subroutine_body(self):
         if self._analysis:
             self._analysis_write('<subroutineBody>\n')
@@ -120,11 +118,11 @@ class CompilationEngine(object):
         self._compile_type()
         var_name = self._get_and_advance_token(valid_token_type="IDENTIFIER", metadata="var/defined")
         #self._define_symbol(var_name, )
-        while self._is_terminal(','):
-            self._compile_terminal(',')
+        while self._get_current_token() == ',':
+            self._get_and_advance_token(',')
             var_name = self._get_and_advance_token(valid_token_type="IDENTIFIER", metadata="var/defined")
             #self._define_symbol(var_name, )
-        self._compile_terminal(';')
+        self._get_and_advance_token(';')
         self._analysis_write('</varDec>\n')
 
 
@@ -135,14 +133,7 @@ class CompilationEngine(object):
             self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/use")
 
 
-    def _is_var_name(self):
-        return self._is_terminal(terminal_type='IDENTIFIER')
-
-    def _compile_var_name(self):
-        self._compile_terminal(terminal_type='IDENTIFIER')
-
-
-    """ Statement """
+    """ Compile Statement """
     def _compile_statements(self):
         self._analysis_write('<statements>\n')
         while self._get_current_token() in ['let', 'if', 'while', 'do', 'return']:
@@ -159,164 +150,147 @@ class CompilationEngine(object):
         self._analysis_write('</statements>\n')
 
 
-
     def _compile_let_statement(self):
         self._analysis_write('<letStatement>\n')
-        self._compile_terminal('let')
-        self._compile_var_name()
-        if self._is_terminal('['):
-            self._compile_terminal('[')
+        self._get_and_advance_token('let')
+        self._get_and_advance_token(valid_token_type='IDENTIFIER')
+        if self._get_current_token() == '[':
+            self._get_and_advance_token('[')
             self._compile_expression()
-            self._compile_terminal(']')
-        self._compile_terminal('=')
+            self._get_and_advance_token(']')
+        self._get_and_advance_token('=')
         self._compile_expression()
-        self._compile_terminal(';')
+        self._get_and_advance_token(';')
         self._analysis_write('</letStatement>\n')
 
 
     def _compile_if_statement(self):
         self._analysis_write('<ifStatement>\n')
-        self._compile_terminal('if')
-        self._compile_terminal('(')
+        self._get_and_advance_token('if')
+        self._get_and_advance_token('(')
         self._compile_expression()
-        self._compile_terminal(')')
-        self._compile_terminal('{')
+        self._get_and_advance_token(')')
+        self._get_and_advance_token('{')
         self._compile_statements()
-        self._compile_terminal('}')
-        if self._is_terminal('else'):
-            self._compile_terminal('else')
-            self._compile_terminal('{')
+        self._get_and_advance_token('}')
+        if self._get_current_token() == 'else':
+            self._get_and_advance_token('else')
+            self._get_and_advance_token('{')
             self._compile_statements()
-            self._compile_terminal('}')
+            self._get_and_advance_token('}')
         self._analysis_write('</ifStatement>\n')
 
 
     def _compile_while_statement(self):
         self._analysis_write('<whileStatement>\n')
-        self._compile_terminal('while')
-        self._compile_terminal('(')
+        self._get_and_advance_token('while')
+        self._get_and_advance_token('(')
         self._compile_expression()
-        self._compile_terminal(')')
-        self._compile_terminal('{')
+        self._get_and_advance_token(')')
+        self._get_and_advance_token('{')
         self._compile_statements()
-        self._compile_terminal('}')
+        self._get_and_advance_token('}')
         self._analysis_write('</whileStatement>\n')
 
 
     def _compile_do_statement(self):
         self._analysis_write('<doStatement>\n')
-        self._compile_terminal('do')
-        self._compile_subroutine_call()
-        self._compile_terminal(';')
+        self._get_and_advance_token('do')
+        if self._tokenizer.get_next_token() == ".":
+            self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/use")
+            self._get_and_advance_token('.')
+        self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="subroutine/use")
+        self._get_and_advance_token('(')
+        self._compile_expression_list()
+        self._get_and_advance_token(')')
+        self._get_and_advance_token(';')
         self._analysis_write('</doStatement>\n')
 
 
     def _compile_return_statement(self):
         self._analysis_write('<returnStatement>\n')
-        self._compile_terminal('return')
-        if self._is_expression():
+        self._get_and_advance_token('return')
+        if self._get_current_token() != ';':
             self._compile_expression()
-        self._compile_terminal(';')
+        self._get_and_advance_token(';')
         self._analysis_write('</returnStatement>\n')
 
 
-    """ Expression """
-    TERMINAL_OP = ['+', '-', '*', '/', '&', '|', '<', '>', '=']
-    TERMINAL_UNARY_OP = ['-', '~']
-    TERMINAL_KEYWORD_CONSTANT = ['true', 'false', 'null', 'this']
-
-    def _is_expression(self):
-        return self._is_term()
-
+    """ Compile Expression """
     def _compile_expression(self):
         self._analysis_write('<expression>\n')
         self._compile_term()
-        while self._is_terminal(CompilationEngine.TERMINAL_OP):
-            self._compile_terminal(CompilationEngine.TERMINAL_OP)
+        while self._get_current_token() in ['+', '-', '*', '/', '&', '|', '<', '>', '=']:
+            self._get_and_advance_token(['+', '-', '*', '/', '&', '|', '<', '>', '='])
             self._compile_term()
         self._analysis_write('</expression>\n')
 
 
-    def _is_term(self):
-        int_const = self._is_terminal(terminal_type='INT_CONST')
-        str_const = self._is_terminal(terminal_type='STRING_CONST')
-        kw_const = self._is_terminal(CompilationEngine.TERMINAL_KEYWORD_CONSTANT)
-        var_array = self._is_var_name()
-        sr_call = self._is_subroutine_call()
-        group = self._is_terminal('(')
-        anary_op = self._is_terminal(CompilationEngine.TERMINAL_UNARY_OP)
-        return (int_const or str_const or kw_const or var_array or sr_call or group or anary_op)
-
     def _compile_term(self):
         self._analysis_write('<term>\n')
-        if self._is_terminal(terminal_type='INT_CONST'):
-            self._compile_terminal(terminal_type='INT_CONST')
-        elif self._is_terminal(terminal_type='STRING_CONST'):
-            self._compile_terminal(terminal_type='STRING_CONST')
-        elif self._is_terminal(CompilationEngine.TERMINAL_KEYWORD_CONSTANT):
-            self._compile_terminal(CompilationEngine.TERMINAL_KEYWORD_CONSTANT)
-        elif self._is_subroutine_call():
-            self._compile_subroutine_call()
-        elif self._is_var_name():
-            self._compile_var_name()
-            if self._is_terminal('['):
-                self._compile_terminal('[')
-                self._compile_expression()
-                self._compile_terminal(']')
-        elif self._is_terminal('('):
-            self._compile_terminal('(')
+        if self._get_current_token_type() == 'INT_CONST':
+            self._get_and_advance_token(valid_token_type='INT_CONST')
+        elif self._get_current_token_type() == 'STRING_CONST':
+            self._get_and_advance_token(valid_token_type='STRING_CONST')
+        elif self._get_current_token() in ['true', 'false', 'null', 'this']:
+            self._get_and_advance_token(['true', 'false', 'null', 'this'])
+        elif self._get_current_token() == '(':
+            self._get_and_advance_token('(')
             self._compile_expression()
-            self._compile_terminal(')')
-        elif self._is_terminal(CompilationEngine.TERMINAL_UNARY_OP):
-            self._compile_terminal(CompilationEngine.TERMINAL_UNARY_OP)
+            self._get_and_advance_token(')')
+        elif self._get_current_token() in ['-', '~']:
+            self._get_and_advance_token(['-', '~'])
             self._compile_term()
+        elif self._get_current_token_type() == 'IDENTIFIER':
+            if self._get_next_token() == '[':
+                self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="var/use")
+                self._get_and_advance_token('[')
+                self._compile_expression()
+                self._get_and_advance_token(']')
+            elif self._get_next_token() == '.':
+                self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/use")
+                self._get_and_advance_token('.')
+                self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="subroutine/use")
+                self._get_and_advance_token('(')
+                self._compile_expression_list()
+                self._get_and_advance_token(')')
+            elif self._get_next_token() == '(':
+                self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="subroutine/use")
+                self._get_and_advance_token('(')
+                self._compile_expression_list()
+                self._get_and_advance_token(')')
+            else:
+                self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="var/use")
         self._analysis_write('</term>\n')
-
-
-    def _is_subroutine_call(self):
-        is_func = self._is_terminal(terminal_type='IDENTIFIER') and self._tokenizer.get_next_token() == "("
-        is_method = self._is_terminal(terminal_type='IDENTIFIER') and self._tokenizer.get_next_token() == '.'
-        return (is_func or is_method)
-
-    def _compile_subroutine_call(self):
-        if self._tokenizer.get_next_token() == ".":
-            self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/use")
-            self._compile_terminal('.')
-        self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="subroutine/use")
-        self._compile_terminal('(')
-        self._compile_expression_list()
-        self._compile_terminal(')')
 
 
     def _compile_expression_list(self):
         self._analysis_write('<expressionList>\n')
-        if self._is_expression():
+        if self._get_current_token() != ')':
             self._compile_expression()
-            while self._is_terminal(','):
-                self._compile_terminal(',')
+            while self._get_current_token() == ',':
+                self._get_and_advance_token(',')
                 self._compile_expression()
         self._analysis_write('</expressionList>\n')
 
 
-    """ Lexical elements """
-    def _is_terminal(self, terminals=None, terminal_type=None):
-        if isinstance(terminals, str):
-            terminals = [terminals]
-        if terminals and not self._get_current_token() in terminals:
-            return False
-        if terminal_type is not None and self._tokenizer.token_type() != terminal_type:
-            return False
-        return True
-
-    def _compile_terminal(self, terminals=None, terminal_type=None):
-        self._get_and_advance_token(terminals, terminal_type)
+    """ Utils """
+    def _define_symbol(self, var_name, var_type, var_kind):
+        if self._symbol_table:
+            self._symbol_table.define(var_name, var_type, var_kind)
 
 
     def _get_current_token(self):
         return self._tokenizer.get_current_token()
 
+
+    def _get_next_token(self):
+        return self._tokenizer.get_next_token()
+
+
     def _get_current_token_type(self):
         return self._tokenizer.token_type()
+
 
     def _get_and_advance_token(self, valid_tokens=None, valid_token_type=None, metadata=""):
         if isinstance(valid_tokens, str):
@@ -351,10 +325,10 @@ class CompilationEngine(object):
             raise Exception("Invalid token type: " + token_type)
         self._analysis_write('<' + token_type + '>')
         self._analysis_write(token)
-        if metadata:
-            pass
-            #self._analysis_write('(' + metadata + ')')  # for chapter 11
+        if metadata and CompilationEngine.WRITE_METADATA:
+            self._analysis_write('(' + metadata + ')')  # for chapter 11
         self._analysis_write('</' + token_type + '>\n')
+
 
     def _analysis_write(self, str):
         if self._analysis:
