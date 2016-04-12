@@ -47,11 +47,11 @@ class CompilationEngine(object):
         var_kind = self._get_and_advance_token(['static', 'field'])
         var_type = self._get_token_as_var_type()
         var_name = self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata=var_kind+"/defined")
-        self._define_symbol(var_name, var_type, var_kind)
+        self._symbol_table.define(var_name, var_type, var_kind)
         while self._tokenizer.get_current_token() == ',':
             self._get_and_advance_token(',')
             var_name = self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata=var_kind+"/defined")
-            self._define_symbol(var_name, var_type, var_kind)
+            self._symbol_table.define(var_name, var_type, var_kind)
         self._get_and_advance_token(';')
         self._analysis_output.write('</classVarDec>\n')
 
@@ -78,23 +78,17 @@ class CompilationEngine(object):
         if self._tokenizer.get_current_token() != ')':
             var_type = self._get_token_as_var_type()
             var_name = self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="argument/defined")
-            self._define_symbol(var_name, var_type, 'ARG')
+            self._symbol_table.define(var_name, var_type, 'ARG')
             param_cnt = 0
             while self._tokenizer.get_current_token() == ',':
                 self._get_and_advance_token(',')
                 var_type = self._get_token_as_var_type()
                 var_name = self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="argument/defined")
-                self._define_symbol(var_name, var_type, 'ARG')
+                self._symbol_table.define(var_name, var_type, 'ARG')
                 param_cnt += 1
         self._analysis_output.write('</parameterList>\n')
         return param_cnt
 
-    def _get_token_as_var_type(self):
-        try:
-            var_type = self._get_and_advance_token(['int', 'char', 'boolean'])
-        except:
-            var_type = self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/use")
-        return var_type
 
 
     def _compile_subroutine_body(self):
@@ -112,20 +106,24 @@ class CompilationEngine(object):
         self._get_and_advance_token('var')
         self._compile_type()
         var_name = self._get_and_advance_token(valid_token_type="IDENTIFIER", metadata="var/defined")
-        #self._define_symbol(var_name, )
+        #self._symbol_table.define(var_name, var_type, 'ARG')
         while self._tokenizer.get_current_token() == ',':
             self._get_and_advance_token(',')
             var_name = self._get_and_advance_token(valid_token_type="IDENTIFIER", metadata="var/defined")
-            #self._define_symbol(var_name, )
+            #self._symbol_table.define(var_name, var_type, 'ARG')
         self._get_and_advance_token(';')
         self._analysis_output.write('</varDec>\n')
 
 
-    def _compile_type(self):
-        if self._tokenizer.get_current_token() in ['int', 'char', 'boolean']:
-            self._get_and_advance_token(['int', 'char', 'boolean'])
-        else:
-            self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/use")
+    def _get_token_as_var_type(self):
+        try:
+            var_type = self._get_and_advance_token(['int', 'char', 'boolean'])
+        except:
+            var_type = self._get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/use")
+        return var_type
+
+    def _compile_type(self):  # regacy
+        self._get_token_as_var_type()
 
 
     """ Compile Statement """
@@ -270,11 +268,6 @@ class CompilationEngine(object):
 
 
     """ Utils """
-    def _define_symbol(self, var_name, var_type, var_kind):
-        if self._symbol_table:
-            self._symbol_table.define(var_name, var_type, var_kind)
-
-
     def _get_and_advance_token(self, valid_tokens=None, valid_token_type=None, metadata=""):
         if isinstance(valid_tokens, str):
             valid_tokens = [valid_tokens]
@@ -282,24 +275,17 @@ class CompilationEngine(object):
         token_type = self._tokenizer.token_type()
         if (valid_tokens and not token in valid_tokens) or (valid_token_type  and token_type != valid_token_type):
             raise Exception('Invalid syntax: ' + token + ' (expected ' + token_type + ')')
-        self._output_current_token(metadata=metadata)
-        self._tokenizer.advance()
-        return token
 
-
-    def _output_current_token(self, metadata=""):
-        token_type = self._tokenizer.token_type().lower()
+        token_type = token_type.lower().replace('int_const', 'integerConstant').replace('string_const', 'stringConstant')
         if token_type == 'keyword':
             token = self._tokenizer.key_word()
         elif token_type == 'symbol':
             token = self._tokenizer.symbol().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
         elif token_type == 'identifier':
             token = self._tokenizer.identifier()
-        elif token_type == 'int_const':
-            token_type = 'integerConstant'
+        elif token_type == 'integerConstant':
             token = str(self._tokenizer.int_val())
-        elif token_type == 'string_const':
-            token_type = 'stringConstant'
+        elif token_type == 'stringConstant':
             token = self._tokenizer.string_val()
         else:
             raise Exception("Invalid token type: " + token_type)
@@ -308,3 +294,5 @@ class CompilationEngine(object):
         if metadata and CompilationEngine.WRITE_METADATA:
             self._analysis_output.write('(' + metadata + ')')  # for chapter 11
         self._analysis_output.write('</' + token_type + '>\n')
+        self._tokenizer.advance()
+        return token
