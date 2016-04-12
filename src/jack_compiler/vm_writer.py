@@ -13,7 +13,7 @@ class VMWriter(object):
     def write_pop(self, segment, index):
         pass
 
-    def write_arithmetic(command):
+    def write_arithmetic(self, command):
         pass
 
     def write_label(self, label):
