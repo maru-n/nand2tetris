@@ -11,14 +11,14 @@ class VMWriter(object):
     def write_push(self, segment, index):
         self.__output.write('push ')
         self.__output.write(segment + ' ')
-        self.__output.write(index)
+        self.__output.write(str(index))
         self.__output.write('\n')
 
 
     def write_pop(self, segment, index):
         self.__output.write('pop ')
         self.__output.write(segment + ' ')
-        self.__output.write(index)
+        self.__output.write(str(index))
         self.__output.write('\n')
 
 
@@ -31,18 +31,26 @@ class VMWriter(object):
 
 
     def write_label(self, label):
-        pass
+        self.__output.write('label ')
+        self.__output.write(label)
+        self.__output.write('\n')
+
 
     def write_goto(self, label):
-        pass
+        self.__output.write('goto ')
+        self.__output.write(label)
+        self.__output.write('\n')
+
 
     def write_if(self, label):
-        pass
+        self.__output.write('if-goto ')
+        self.__output.write(label)
+        self.__output.write('\n')
+
 
     def write_call(self, name, n_args):
         self.__output.write('call ')
-        self.__output.write(name)
-        self.__output.write(' ')
+        self.__output.write(name + ' ')
         self.__output.write(str(n_args))
         self.__output.write('\n')
 
@@ -56,3 +64,9 @@ class VMWriter(object):
 
     def write_return(self):
         self.__output.write('return\n')
+
+
+    def __convert_segment_string(self, segment_str):
+        segment_str = segment_str.upper()
+        segment_str = segment_str.replace('ARG', 'argument')
+        segment_str = segment_str.replace('ARG', 'argument')

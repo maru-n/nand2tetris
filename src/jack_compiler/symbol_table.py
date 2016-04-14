@@ -32,15 +32,11 @@ class SymbolTable(object):
             self.__subroutine_table[name] = SymbolTableRecord(name, type, kind, self.var_count(kind))
         else:
             raise Exception('Invalid kind of identifier. identifier:' + name + ' kind:' + kind)
-        self.__increment_var_count(kind)
+        self.__var_count[kind] += 1
 
 
     def var_count(self, kind):
         return self.__var_count[kind]
-
-
-    def __increment_var_count(self, kind):
-        self.__var_count[kind] += 1
 
 
     def kind_of(self, name):
