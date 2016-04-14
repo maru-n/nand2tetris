@@ -13,10 +13,10 @@ class CompilationEngine(object):
         self.tokenizer = tokenizer
         self.symbol_table = symbol_table if symbol_table else SymbolTable()
         self.vm_writer = vm_writer if vm_writer else VMWriter(open(os.devnull,"w"))
-        self.__analysis_output = open(os.devnull,"w")
         self.__unique_label_index = 0
 
     def compile(self):
+        #self.__analysis_output = None
         self.run()
 
 
@@ -34,7 +34,7 @@ class CompilationEngine(object):
 
     """ Compile Program """
     def __compile_class(self):
-        self.__analysis_output.write('<class>\n')
+        self.__analysis_write('<class>\n')
         self.__advance_tokens('class')
         self.__class_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/defined")
         self.__advance_tokens('{')
@@ -43,11 +43,11 @@ class CompilationEngine(object):
         while self.tokenizer.get_current_token() in ['constructor', 'function', 'method']:
             self.__compile_subroutine_dec()
         self.__advance_tokens('}')
-        self.__analysis_output.write('</class>\n')
+        self.__analysis_write('</class>\n')
 
 
     def __compile_class_var_dec(self):
-        self.__analysis_output.write('<classVarDec>\n')
+        self.__analysis_write('<classVarDec>\n')
         var_kind = self.__get_and_advance_token(['static', 'field'])
         var_type = self.__get_token_as_var_type()
         var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata=var_kind+"/defined")
@@ -57,11 +57,11 @@ class CompilationEngine(object):
             var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata=var_kind+"/defined")
             self.symbol_table.define(var_name, var_type, var_kind)
         self.__advance_tokens(';')
-        self.__analysis_output.write('</classVarDec>\n')
+        self.__analysis_write('</classVarDec>\n')
 
 
     def __compile_subroutine_dec(self):
-        self.__analysis_output.write('<subroutineDec>\n')
+        self.__analysis_write('<subroutineDec>\n')
         self.symbol_table.start_subroutine()
         func_type = self.__get_and_advance_token(['constructor', 'function', 'method'])
         if self.tokenizer.get_current_token() == 'void':
@@ -73,11 +73,11 @@ class CompilationEngine(object):
         param_num = self.__compile_parameter_list()
         self.__get_and_advance_token(')')
         self.__compile_subroutine_body()
-        self.__analysis_output.write('</subroutineDec>\n')
+        self.__analysis_write('</subroutineDec>\n')
 
 
     def __compile_parameter_list(self):
-        self.__analysis_output.write('<parameterList>\n')
+        self.__analysis_write('<parameterList>\n')
         param_cnt = 0
         if self.tokenizer.get_current_token() != ')':
             var_type = self.__get_token_as_var_type()
@@ -90,12 +90,12 @@ class CompilationEngine(object):
                 var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="argument/defined")
                 self.symbol_table.define(var_name, var_type, 'ARG')
                 param_cnt += 1
-        self.__analysis_output.write('</parameterList>\n')
+        self.__analysis_write('</parameterList>\n')
         return param_cnt
 
 
     def __compile_subroutine_body(self):
-        self.__analysis_output.write('<subroutineBody>\n')
+        self.__analysis_write('<subroutineBody>\n')
         self.__advance_tokens('{')
         n_locals = 0
         while self.tokenizer.get_current_token() == 'var':
@@ -103,11 +103,11 @@ class CompilationEngine(object):
         self.vm_writer.write_function(self.__class_name+'.'+self.__current_func_name, n_locals)
         self.__compile_statements()
         self.__advance_tokens('}')
-        self.__analysis_output.write('</subroutineBody>\n')
+        self.__analysis_write('</subroutineBody>\n')
 
 
     def __compile_var_dec(self):
-        self.__analysis_output.write('<varDec>\n')
+        self.__analysis_write('<varDec>\n')
         self.__advance_tokens('var')
         var_type = self.__get_token_as_var_type()
         var_name = self.__get_and_advance_token(valid_token_type="IDENTIFIER", metadata="var/defined")
@@ -119,7 +119,7 @@ class CompilationEngine(object):
             self.symbol_table.define(var_name, var_type, 'VAR')
             cnt += 1
         self.__advance_tokens(';')
-        self.__analysis_output.write('</varDec>\n')
+        self.__analysis_write('</varDec>\n')
         return cnt
 
 
@@ -132,7 +132,7 @@ class CompilationEngine(object):
 
 
     def __compile_statements(self):
-        self.__analysis_output.write('<statements>\n')
+        self.__analysis_write('<statements>\n')
         while self.tokenizer.get_current_token() in ['let', 'if', 'while', 'do', 'return']:
             if self.tokenizer.get_current_token() == 'let':
                 self.__compile_let_statement()
@@ -144,11 +144,11 @@ class CompilationEngine(object):
                 self.__compile_do_statement()
             elif self.tokenizer.get_current_token() == 'return':
                 self.__compile_return_statement()
-        self.__analysis_output.write('</statements>\n')
+        self.__analysis_write('</statements>\n')
 
 
     def __compile_let_statement(self):
-        self.__analysis_output.write('<letStatement>\n')
+        self.__analysis_write('<letStatement>\n')
         self.__advance_tokens('let')
         var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
         if self.tokenizer.get_current_token() == '[':
@@ -161,11 +161,11 @@ class CompilationEngine(object):
         segment = self.__convert_symbol_kind_to_segment(self.symbol_table.kind_of(var_name))
         index = self.symbol_table.index_of(var_name)
         self.vm_writer.write_pop(segment, index)
-        self.__analysis_output.write('</letStatement>\n')
+        self.__analysis_write('</letStatement>\n')
 
 
     def __compile_if_statement(self):
-        self.__analysis_output.write('<ifStatement>\n')
+        self.__analysis_write('<ifStatement>\n')
         label1 = self.__get_unique_vm_label()
         label2 = self.__get_unique_vm_label()
         self.__advance_tokens(['if', '('])
@@ -182,13 +182,13 @@ class CompilationEngine(object):
             self.__compile_statements()
             self.__advance_tokens('}')
         self.vm_writer.write_label(label2)
-        self.__analysis_output.write('</ifStatement>\n')
+        self.__analysis_write('</ifStatement>\n')
 
 
     def __compile_while_statement(self):
         label1 = self.__get_unique_vm_label()
         label2 = self.__get_unique_vm_label()
-        self.__analysis_output.write('<whileStatement>\n')
+        self.__analysis_write('<whileStatement>\n')
         self.__advance_tokens(['while', '('])
         self.vm_writer.write_label(label1)
         self.__compile_expression()
@@ -199,26 +199,26 @@ class CompilationEngine(object):
         self.vm_writer.write_goto(label1)
         self.__advance_tokens('}')
         self.vm_writer.write_label(label2)
-        self.__analysis_output.write('</whileStatement>\n')
+        self.__analysis_write('</whileStatement>\n')
 
 
 
     def __compile_do_statement(self):
-        self.__analysis_output.write('<doStatement>\n')
+        self.__analysis_write('<doStatement>\n')
         self.__get_and_advance_token('do')
         self.__compile_call_subroutine()
         self.__advance_tokens(';')
-        self.__analysis_output.write('</doStatement>\n')
+        self.__analysis_write('</doStatement>\n')
 
 
     def __compile_return_statement(self):
-        self.__analysis_output.write('<returnStatement>\n')
+        self.__analysis_write('<returnStatement>\n')
         self.__advance_tokens('return')
         if self.tokenizer.get_current_token() != ';':
             self.__compile_expression()
         self.__advance_tokens(';')
         self.vm_writer.write_return()
-        self.__analysis_output.write('</returnStatement>\n')
+        self.__analysis_write('</returnStatement>\n')
 
 
     def __compile_call_subroutine(self):
@@ -234,7 +234,7 @@ class CompilationEngine(object):
 
 
     def __compile_expression(self):
-        self.__analysis_output.write('<expression>\n')
+        self.__analysis_write('<expression>\n')
         self.__compile_term()
         while self.tokenizer.get_current_token() in ['+', '-', '*', '/', '&', '|', '<', '>', '=']:
             op = self.__get_and_advance_token(['+', '-', '*', '/', '&', '|', '<', '>', '='])
@@ -257,11 +257,11 @@ class CompilationEngine(object):
                 self.vm_writer.write_arithmetic('gt')
             elif op == '=':
                 self.vm_writer.write_arithmetic('eq')
-        self.__analysis_output.write('</expression>\n')
+        self.__analysis_write('</expression>\n')
 
 
     def __compile_term(self):
-        self.__analysis_output.write('<term>\n')
+        self.__analysis_write('<term>\n')
         if self.tokenizer.token_type() == 'INT_CONST':
             val = self.__get_and_advance_token(valid_token_type='INT_CONST')
             self.vm_writer.write_push('constant', val)
@@ -303,11 +303,11 @@ class CompilationEngine(object):
                 index = self.symbol_table.index_of(var_name)
                 segment = self.__convert_symbol_kind_to_segment(self.symbol_table.kind_of(var_name))
                 self.vm_writer.write_push(segment, index)
-        self.__analysis_output.write('</term>\n')
+        self.__analysis_write('</term>\n')
 
 
     def __compile_expression_list(self):
-        self.__analysis_output.write('<expressionList>\n')
+        self.__analysis_write('<expressionList>\n')
         n_args = 0
         if self.tokenizer.get_current_token() != ')':
             self.__compile_expression()
@@ -316,7 +316,7 @@ class CompilationEngine(object):
                 self.__advance_tokens(',')
                 self.__compile_expression()
                 n_args += 1
-        self.__analysis_output.write('</expressionList>\n')
+        self.__analysis_write('</expressionList>\n')
         return n_args
 
 
@@ -348,34 +348,44 @@ class CompilationEngine(object):
 
 
     def __get_and_advance_token(self, valid_tokens=None, valid_token_type=None, metadata=""):
-        if isinstance(valid_tokens, str):
-            valid_tokens = [valid_tokens]
-        token = self.tokenizer.get_current_token()
         token_type = self.tokenizer.token_type()
-        if (valid_tokens and not token in valid_tokens) or (valid_token_type  and token_type != valid_token_type):
-            raise Exception('Invalid syntax: ' + token + ' (expected ' + token_type + ')')
+        if valid_token_type  and token_type != valid_token_type:
+            raise Exception('Invalid token type: ' + token_type + ' (expected ' + token_type + ')')
 
         if token_type == 'KEYWORD':
             token_type_xml = token_type.lower()
-            token_xml = self.tokenizer.key_word()
+            token = self.tokenizer.key_word()
         elif token_type == 'SYMBOL':
             token_type_xml = token_type.lower()
-            token_xml = self.tokenizer.symbol().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            token = self.tokenizer.symbol()
         elif token_type == 'IDENTIFIER':
             token_type_xml = token_type.lower()
-            token_xml = self.tokenizer.identifier()
+            token = self.tokenizer.identifier()
         elif token_type == 'INT_CONST':
             token_type_xml = 'integerConstant'
-            token_xml = str(self.tokenizer.int_val())
+            token = str(self.tokenizer.int_val())
         elif token_type == 'STRING_CONST':
             token_type_xml = 'stringConstant'
-            token_xml = self.tokenizer.string_val()
+            token = self.tokenizer.string_val()
         else:
             raise Exception("Invalid token type: " + token_type)
-        self.__analysis_output.write('<' + token_type_xml + '>')
-        self.__analysis_output.write(token_xml)
+
+        if isinstance(valid_tokens, str):
+            valid_tokens = [valid_tokens]
+        if valid_tokens and not token in valid_tokens:
+            raise Exception('Invalid token: ' + token + ' (expected ' + token + ')')
+
+        token_xml = token.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        token_type_xml = token_type.lower().replace('int_const', 'integerConstant').replace('string_const', 'stringConstant')
+        self.__analysis_write('<' + token_type_xml + '>')
+        self.__analysis_write(token_xml)
         if metadata and CompilationEngine.WRITE_METADATA:
-            self.__analysis_output.write('(' + metadata + ')')  # for chapter 11
-        self.__analysis_output.write('</' + token_type_xml + '>\n')
+            self.__analysis_write('(' + metadata + ')')  # for chapter 11
+        self.__analysis_write('</' + token_type_xml + '>\n')
         self.tokenizer.advance()
         return token
+
+
+    def __analysis_write(self, str):
+        if self.__analysis_output:
+            self.__analysis_output.write(str)

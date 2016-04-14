@@ -15,14 +15,12 @@ RE_STRING_CONST = r'\".*\"'
 
 RE_IDENTIFIER = r'[a-zA-Z_]\w*'
 
-
 RE_ALL_TOKENIZE = RE_COMMENT + \
     '|(' + RE_KEYWORD + ')' + \
     '|(' + RE_SYMBOL + ')' + \
     '|(' + RE_INT_CONST + ')' + \
     '|(' + RE_STRING_CONST + ')' + \
     '|(' + RE_IDENTIFIER + ')'
-
 
 class JackTokenizer(object):
 
@@ -33,11 +31,14 @@ class JackTokenizer(object):
         self.__tokens = list(filter(lambda t: t, self.__tokens))
         self.__current_line_idx = -1
 
+
     def has_more_tokens(self):
         return self.__current_line_idx + 1 < len(self.__tokens)
 
+
     def advance(self):
         self.__current_line_idx += 1
+
 
     def token_type(self):
         token = self.get_current_token()
@@ -54,23 +55,30 @@ class JackTokenizer(object):
         else:
             raise Exception("unrecognizable token: " + token)
 
+
     def key_word(self):
         return self.get_current_token()
+
 
     def symbol(self):
         return self.get_current_token()
 
+
     def identifier(self):
         return self.get_current_token()
+
 
     def int_val(self):
         return int(self.get_current_token())
 
+
     def string_val(self):
         return self.get_current_token().replace("\"", "")
 
+
     def get_current_token(self):
         return self.__tokens[self.__current_line_idx]
+
 
     def get_next_token(self):
         return self.__tokens[self.__current_line_idx+1]
