@@ -16,14 +16,11 @@ class CompilationEngine(object):
         self.__unique_label_index = 0
 
     def compile(self):
-        #self.__analysis_output = None
         self.run()
-
 
     def analysis(self, output):
         self.__analysis_output = output
         self.run()
-
 
     def run(self):
         if not self.tokenizer.has_more_tokens():
@@ -36,7 +33,7 @@ class CompilationEngine(object):
     def __compile_class(self):
         self.__analysis_write('<class>\n')
         self.__advance_tokens('class')
-        self.__class_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/defined")
+        self.__class_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
         self.__advance_tokens('{')
         while self.tokenizer.get_current_token() in ['static', 'field']:
             self.__compile_class_var_dec()
@@ -50,11 +47,11 @@ class CompilationEngine(object):
         self.__analysis_write('<classVarDec>\n')
         var_kind = self.__get_and_advance_token(['static', 'field'])
         var_type = self.__get_token_as_var_type()
-        var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata=var_kind+"/defined")
+        var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
         self.symbol_table.define(var_name, var_type, var_kind)
         while self.tokenizer.get_current_token() == ',':
             self.__advance_tokens(',')
-            var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata=var_kind+"/defined")
+            var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
             self.symbol_table.define(var_name, var_type, var_kind)
         self.__advance_tokens(';')
         self.__analysis_write('</classVarDec>\n')
@@ -387,5 +384,7 @@ class CompilationEngine(object):
 
 
     def __analysis_write(self, str):
-        if self.__analysis_output:
+        try:
             self.__analysis_output.write(str)
+        except AttributeError:
+            pass
