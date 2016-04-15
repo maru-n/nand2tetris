@@ -35,6 +35,10 @@ class SymbolTable(object):
         self.__var_count[kind] += 1
 
 
+    def is_defined(self, name):
+        return (name in self.__class_table) or (name in self.__subroutine_table)
+
+
     def var_count(self, kind):
         return self.__var_count[kind]
 
