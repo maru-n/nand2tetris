@@ -60,44 +60,51 @@ class CompilationEngine(object):
     def __compile_subroutine_dec(self):
         self.__analysis_write('<subroutineDec>\n')
         self.symbol_table.start_subroutine()
-        func_type = self.__get_and_advance_token(['constructor', 'function', 'method'])
+        subr_type = self.__get_and_advance_token(['constructor', 'function', 'method'])
         if self.tokenizer.get_current_token() == 'void':
             self.__get_and_advance_token('void')
         else:
             self.__get_token_as_var_type()
-        self.__current_func_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="subroutine/defined")
+        subr_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
         self.__get_and_advance_token('(')
-        param_num = self.__compile_parameter_list()
+        self.__compile_parameter_list()
         self.__get_and_advance_token(')')
-        self.__compile_subroutine_body()
+        self.__compile_subroutine_body(subr_type, self.__class_name + '.' + subr_name)
         self.__analysis_write('</subroutineDec>\n')
 
 
     def __compile_parameter_list(self):
         self.__analysis_write('<parameterList>\n')
-        param_cnt = 0
         if self.tokenizer.get_current_token() != ')':
             var_type = self.__get_token_as_var_type()
-            var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="argument/defined")
+            var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
             self.symbol_table.define(var_name, var_type, 'ARG')
-            param_cnt = 0
             while self.tokenizer.get_current_token() == ',':
                 self.__get_and_advance_token(',')
                 var_type = self.__get_token_as_var_type()
-                var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="argument/defined")
+                var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
                 self.symbol_table.define(var_name, var_type, 'ARG')
-                param_cnt += 1
         self.__analysis_write('</parameterList>\n')
-        return param_cnt
 
 
-    def __compile_subroutine_body(self):
+    def __compile_subroutine_body(self, subroutine_type, vm_subroutine_name):
         self.__analysis_write('<subroutineBody>\n')
         self.__advance_tokens('{')
         n_locals = 0
         while self.tokenizer.get_current_token() == 'var':
             n_locals += self.__compile_var_dec()
-        self.vm_writer.write_function(self.__class_name+'.'+self.__current_func_name, n_locals)
+        self.vm_writer.write_function(vm_subroutine_name, n_locals)
+        if subroutine_type == "constructor":
+            field_num = self.symbol_table.var_count('FIELD')
+            if field_num != 0:
+                self.vm_writer.write_push('constant', field_num)
+                self.vm_writer.write_call('Memory.alloc', 1)
+            else:
+                self.vm_writer.write_push('constant', 0)
+            self.vm_writer.write_pop('pointer', 0)
+        elif subroutine_type == "method":
+            self.vm_writer.write_push('argument', 0)
+            self.vm_writer.write_pop('pointer', 0)
         self.__compile_statements()
         self.__advance_tokens('}')
         self.__analysis_write('</subroutineBody>\n')
@@ -107,12 +114,12 @@ class CompilationEngine(object):
         self.__analysis_write('<varDec>\n')
         self.__advance_tokens('var')
         var_type = self.__get_token_as_var_type()
-        var_name = self.__get_and_advance_token(valid_token_type="IDENTIFIER", metadata="var/defined")
+        var_name = self.__get_and_advance_token(valid_token_type="IDENTIFIER")
         self.symbol_table.define(var_name, var_type, 'VAR')
         cnt = 1
         while self.tokenizer.get_current_token() == ',':
             self.__advance_tokens(',')
-            var_name = self.__get_and_advance_token(valid_token_type="IDENTIFIER", metadata="var/defined")
+            var_name = self.__get_and_advance_token(valid_token_type="IDENTIFIER")
             self.symbol_table.define(var_name, var_type, 'VAR')
             cnt += 1
         self.__advance_tokens(';')
@@ -204,6 +211,7 @@ class CompilationEngine(object):
         self.__analysis_write('<doStatement>\n')
         self.__get_and_advance_token('do')
         self.__compile_call_subroutine()
+        self.vm_writer.write_pop('temp', 0)
         self.__advance_tokens(';')
         self.__analysis_write('</doStatement>\n')
 
@@ -213,6 +221,8 @@ class CompilationEngine(object):
         self.__advance_tokens('return')
         if self.tokenizer.get_current_token() != ';':
             self.__compile_expression()
+        else:
+            self.vm_writer.write_push('constant', 0)
         self.__advance_tokens(';')
         self.vm_writer.write_return()
         self.__analysis_write('</returnStatement>\n')
@@ -220,12 +230,25 @@ class CompilationEngine(object):
 
     def __compile_call_subroutine(self):
         subroutine_name = ""
+        n_args = 0
         if self.tokenizer.get_next_token() == ".":
-            subroutine_name += self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/use")
-            subroutine_name += self.__get_and_advance_token('.')
-        subroutine_name += self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="subroutine/use")
+            var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/use")
+            if self.symbol_table.is_defined(var_name):
+                n_args = 1
+                segment = self.__convert_symbol_kind_to_segment(self.symbol_table.kind_of(var_name))
+                index = self.symbol_table.index_of(var_name)
+                self.vm_writer.write_push(segment, index)
+                class_name = self.symbol_table.type_of(var_name)
+            else:
+                class_name = var_name
+            self.__advance_tokens('.')
+        else:
+            n_args = 1
+            class_name = self.__class_name
+            self.vm_writer.write_push('pointer', 0)
+        subroutine_name += class_name + '.' + self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="subroutine/use")
         self.__advance_tokens('(')
-        n_args = self.__compile_expression_list()
+        n_args += self.__compile_expression_list()
         self.__advance_tokens(')')
         self.vm_writer.write_call(subroutine_name, n_args)
 
@@ -263,7 +286,12 @@ class CompilationEngine(object):
             val = self.__get_and_advance_token(valid_token_type='INT_CONST')
             self.vm_writer.write_push('constant', val)
         elif self.tokenizer.token_type() == 'STRING_CONST':
-            self.__get_and_advance_token(valid_token_type='STRING_CONST')
+            str_val = self.__get_and_advance_token(valid_token_type='STRING_CONST')
+            self.vm_writer.write_push('constant', len(str_val))
+            self.vm_writer.write_call('String.new', 1)
+            # TODO:
+            #for i in range(len(str_val)):
+            #    self.vm_writer.write_call('String.new', 1)
         elif self.tokenizer.get_current_token() == 'true':
             self.__advance_tokens('true')
             self.vm_writer.write_push('constant', 1)
@@ -276,6 +304,7 @@ class CompilationEngine(object):
             self.vm_writer.write_push('constant', 0)
         elif self.tokenizer.get_current_token() == 'this':
             self.__advance_tokens('this')
+            self.vm_writer.write_push('pointer', 0)
         elif self.tokenizer.get_current_token() == '(':
             self.__advance_tokens('(')
             self.__compile_expression()
@@ -327,7 +356,7 @@ class CompilationEngine(object):
         if symbol_kinde == 'STATIC':
             segment = 'static'
         elif symbol_kinde == 'FIELD':
-            segment = 'argument'
+            segment = 'this'
         elif symbol_kinde == 'ARG':
             segment = 'argument'
         elif symbol_kinde == 'VAR':
