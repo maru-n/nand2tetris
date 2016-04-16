@@ -4,8 +4,8 @@ import re
 
 RE_COMMENT = r'//.*\n|/\*[\s\S]*?\*/|//.*|\s+|\n+'
 
-RE_KEYWORD = r'class|constructor|function|method|field|static|' + \
-'var|int|char|boolean|void|true|false|null|this|let|do|if|else|while|return'
+RE_KEYWORD = r'class$|constructor$|function$|method$|field$|static$|' + \
+r'var$|int$|char$|boolean$|void$|true$|false$|null$|this$|let$|do$|if$|else$|while$|return$'
 
 RE_SYMBOL = r'{|}|\(|\)|\[|\]|\.|,|;|\+|-|\*|/|&|\||<|>|=|~'
 
@@ -15,7 +15,7 @@ RE_STRING_CONST = r'\".*\"'
 
 RE_IDENTIFIER = r'[a-zA-Z_]\w*'
 
-RE_ALL_TOKENIZE = RE_COMMENT + \
+RE_SPLIT = RE_COMMENT + \
     '|(' + RE_KEYWORD + ')' + \
     '|(' + RE_SYMBOL + ')' + \
     '|(' + RE_INT_CONST + ')' + \
@@ -27,7 +27,7 @@ class JackTokenizer(object):
     def __init__(self, file_name):
         super(JackTokenizer, self).__init__()
         source = open(file_name).read()
-        self.__tokens = re.split(RE_ALL_TOKENIZE, source)
+        self.__tokens = re.split(RE_SPLIT, source)
         self.__tokens = list(filter(lambda t: t, self.__tokens))
         self.__current_line_idx = -1
 

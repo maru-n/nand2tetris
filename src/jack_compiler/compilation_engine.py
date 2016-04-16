@@ -326,10 +326,10 @@ class CompilationEngine(object):
                 var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
                 index = self.symbol_table.index_of(var_name)
                 segment = self.__convert_symbol_kind_to_segment(self.symbol_table.kind_of(var_name))
-                self.vm_writer.write_push(segment, index)
                 self.__get_and_advance_token('[')
                 self.__compile_expression()
                 self.__get_and_advance_token(']')
+                self.vm_writer.write_push(segment, index)
                 self.vm_writer.write_arithmetic('add')
                 self.vm_writer.write_pop('pointer', 1)
                 self.vm_writer.write_push('that', 0)
@@ -387,7 +387,8 @@ class CompilationEngine(object):
     def __get_and_advance_token(self, valid_tokens=None, valid_token_type=None):
         token_type = self.tokenizer.token_type()
         if valid_token_type and token_type != valid_token_type:
-            raise Exception('Invalid token type: ' + token_type + ' (expected ' + valid_token_type + ')')
+            token = self.tokenizer.get_current_token()
+            raise Exception('Invalid token: ' + token + ' . type is ' + token_type + ' (expected ' + valid_token_type + ')')
 
         if token_type == 'KEYWORD':
             token_type_xml = token_type.lower()
