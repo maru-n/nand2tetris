@@ -6,8 +6,6 @@ import os
 
 class CompilationEngine(object):
 
-    WRITE_METADATA = False  # for symbol table test on chapter 11
-
     def __init__(self, tokenizer, symbol_table=None, vm_writer=None):
         super(CompilationEngine, self).__init__()
         self.tokenizer = tokenizer
@@ -131,7 +129,7 @@ class CompilationEngine(object):
         try:
             var_type = self.__get_and_advance_token(['int', 'char', 'boolean'])
         except:
-            var_type = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/use")
+            var_type = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
         return var_type
 
 
@@ -232,7 +230,7 @@ class CompilationEngine(object):
         subroutine_name = ""
         n_args = 0
         if self.tokenizer.get_next_token() == ".":
-            var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="class/use")
+            var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
             if self.symbol_table.is_defined(var_name):
                 n_args = 1
                 segment = self.__convert_symbol_kind_to_segment(self.symbol_table.kind_of(var_name))
@@ -246,7 +244,7 @@ class CompilationEngine(object):
             n_args = 1
             class_name = self.__class_name
             self.vm_writer.write_push('pointer', 0)
-        subroutine_name += class_name + '.' + self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="subroutine/use")
+        subroutine_name += class_name + '.' + self.__get_and_advance_token(valid_token_type='IDENTIFIER')
         self.__advance_tokens('(')
         n_args += self.__compile_expression_list()
         self.__advance_tokens(')')
@@ -318,14 +316,14 @@ class CompilationEngine(object):
                 self.vm_writer.write_arithmetic('not')
         elif self.tokenizer.token_type() == 'IDENTIFIER':
             if self.tokenizer.get_next_token() == '[':
-                self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="var/use")
+                self.__get_and_advance_token(valid_token_type='IDENTIFIER')
                 self.__get_and_advance_token('[')
                 self.__compile_expression()
                 self.__get_and_advance_token(']')
             elif self.tokenizer.get_next_token() in ['.', '(']:
                 self.__compile_call_subroutine()
             else:
-                var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER', metadata="var/use")
+                var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
                 index = self.symbol_table.index_of(var_name)
                 segment = self.__convert_symbol_kind_to_segment(self.symbol_table.kind_of(var_name))
                 self.vm_writer.write_push(segment, index)
@@ -373,7 +371,7 @@ class CompilationEngine(object):
             self.__get_and_advance_token(token)
 
 
-    def __get_and_advance_token(self, valid_tokens=None, valid_token_type=None, metadata=""):
+    def __get_and_advance_token(self, valid_tokens=None, valid_token_type=None):
         token_type = self.tokenizer.token_type()
         if valid_token_type  and token_type != valid_token_type:
             raise Exception('Invalid token type: ' + token_type + ' (expected ' + token_type + ')')
@@ -405,8 +403,6 @@ class CompilationEngine(object):
         token_type_xml = token_type.lower().replace('int_const', 'integerConstant').replace('string_const', 'stringConstant')
         self.__analysis_write('<' + token_type_xml + '>')
         self.__analysis_write(token_xml)
-        if metadata and CompilationEngine.WRITE_METADATA:
-            self.__analysis_write('(' + metadata + ')')  # for chapter 11
         self.__analysis_write('</' + token_type_xml + '>\n')
         self.tokenizer.advance()
         return token
