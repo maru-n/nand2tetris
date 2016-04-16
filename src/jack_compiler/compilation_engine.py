@@ -157,18 +157,23 @@ class CompilationEngine(object):
         var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
         segment = self.__convert_symbol_kind_to_segment(self.symbol_table.kind_of(var_name))
         index = self.symbol_table.index_of(var_name)
+        array = False
         if self.tokenizer.get_current_token() == '[':
+            array = True
             self.__advance_tokens('[')
             self.__compile_expression()
             self.__advance_tokens(']')
             self.vm_writer.write_push(segment, index)
             self.vm_writer.write_arithmetic('add')
-            self.vm_writer.write_pop('pointer', 1)
-            segment = 'that'
-            index = 0
+            self.vm_writer.write_pop('temp', 1)
         self.__advance_tokens('=')
         self.__compile_expression()
         self.__advance_tokens(';')
+        if array:
+            self.vm_writer.write_push('temp', 1)
+            self.vm_writer.write_pop('pointer', 1)
+            segment = "that"
+            index = 0
         self.vm_writer.write_pop(segment, index)
         self.__analysis_write('</letStatement>\n')
 
