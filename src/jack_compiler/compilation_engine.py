@@ -59,6 +59,8 @@ class CompilationEngine(object):
         self.__analysis_write('<subroutineDec>\n')
         self.symbol_table.start_subroutine()
         subr_type = self.__get_and_advance_token(['constructor', 'function', 'method'])
+        if subr_type == 'method':
+            self.symbol_table.define('this', self.__class_name, 'ARG')
         if self.tokenizer.get_current_token() == 'void':
             self.__get_and_advance_token('void')
         else:
@@ -330,7 +332,7 @@ class CompilationEngine(object):
                 self.__get_and_advance_token(']')
                 self.vm_writer.write_arithmetic('add')
                 self.vm_writer.write_pop('pointer', 1)
-                self.vm_writer.write_push('that', 0)                
+                self.vm_writer.write_push('that', 0)
             elif self.tokenizer.get_next_token() in ['.', '(']:
                 self.__compile_call_subroutine()
             else:
@@ -384,8 +386,8 @@ class CompilationEngine(object):
 
     def __get_and_advance_token(self, valid_tokens=None, valid_token_type=None):
         token_type = self.tokenizer.token_type()
-        if valid_token_type  and token_type != valid_token_type:
-            raise Exception('Invalid token type: ' + token_type + ' (expected ' + token_type + ')')
+        if valid_token_type and token_type != valid_token_type:
+            raise Exception('Invalid token type: ' + token_type + ' (expected ' + valid_token_type + ')')
 
         if token_type == 'KEYWORD':
             token_type_xml = token_type.lower()
