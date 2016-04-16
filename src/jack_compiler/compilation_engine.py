@@ -153,15 +153,20 @@ class CompilationEngine(object):
         self.__analysis_write('<letStatement>\n')
         self.__advance_tokens('let')
         var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
+        segment = self.__convert_symbol_kind_to_segment(self.symbol_table.kind_of(var_name))
+        index = self.symbol_table.index_of(var_name)
         if self.tokenizer.get_current_token() == '[':
             self.__advance_tokens('[')
             self.__compile_expression()
             self.__advance_tokens(']')
+            self.vm_writer.write_push(segment, index)
+            self.vm_writer.write_arithmetic('add')
+            self.vm_writer.write_pop('pointer', 1)
+            segment = 'that'
+            index = 0
         self.__advance_tokens('=')
         self.__compile_expression()
         self.__advance_tokens(';')
-        segment = self.__convert_symbol_kind_to_segment(self.symbol_table.kind_of(var_name))
-        index = self.symbol_table.index_of(var_name)
         self.vm_writer.write_pop(segment, index)
         self.__analysis_write('</letStatement>\n')
 
@@ -287,9 +292,9 @@ class CompilationEngine(object):
             str_val = self.__get_and_advance_token(valid_token_type='STRING_CONST')
             self.vm_writer.write_push('constant', len(str_val))
             self.vm_writer.write_call('String.new', 1)
-            # TODO:
-            #for i in range(len(str_val)):
-            #    self.vm_writer.write_call('String.new', 1)
+            for s in str_val:
+                self.vm_writer.write_push('constant', ord(s))
+                self.vm_writer.write_call('String.appendChar', 2)
         elif self.tokenizer.get_current_token() == 'true':
             self.__advance_tokens('true')
             self.vm_writer.write_push('constant', 1)
@@ -316,10 +321,16 @@ class CompilationEngine(object):
                 self.vm_writer.write_arithmetic('not')
         elif self.tokenizer.token_type() == 'IDENTIFIER':
             if self.tokenizer.get_next_token() == '[':
-                self.__get_and_advance_token(valid_token_type='IDENTIFIER')
+                var_name = self.__get_and_advance_token(valid_token_type='IDENTIFIER')
+                index = self.symbol_table.index_of(var_name)
+                segment = self.__convert_symbol_kind_to_segment(self.symbol_table.kind_of(var_name))
+                self.vm_writer.write_push(segment, index)
                 self.__get_and_advance_token('[')
                 self.__compile_expression()
                 self.__get_and_advance_token(']')
+                self.vm_writer.write_arithmetic('add')
+                self.vm_writer.write_pop('pointer', 1)
+                self.vm_writer.write_push('that', 0)                
             elif self.tokenizer.get_next_token() in ['.', '(']:
                 self.__compile_call_subroutine()
             else:
