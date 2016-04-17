@@ -25,10 +25,16 @@ skipped
 
 ### Chapter 10
 
-`src/jack_compiler/` and `JackAnalyzerXML`
+`src/jack_compiler/` and `JackAnalyzer`
 
-`./tools/check_10.sh` compare all generated *.xml files with originals on project 10.
+`./tools/check_10.sh` generate xml files and compare it with correct anser on project 11.
 
-### Chapter 11 and after
+### Chapter 11
+
+`src/jack_compiler/` and `JackCompiler`
+
+`./tools/compile_11.sh` compile all code on project 11.
+
+### Chapter 12
 
 In progress!
