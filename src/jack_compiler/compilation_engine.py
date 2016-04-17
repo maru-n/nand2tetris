@@ -416,7 +416,7 @@ class CompilationEngine(object):
         if isinstance(valid_tokens, str):
             valid_tokens = [valid_tokens]
         if valid_tokens and not token in valid_tokens:
-            raise Exception('Invalid token: ' + token + ' (expected ' + token + ')')
+            raise Exception('Invalid token: ' + token + ' (expected ' + str(valid_tokens) + ')')
 
         token_xml = token.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
         token_type_xml = token_type.lower().replace('int_const', 'integerConstant').replace('string_const', 'stringConstant')

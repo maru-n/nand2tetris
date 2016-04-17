@@ -9,7 +9,7 @@ r'var$|int$|char$|boolean$|void$|true$|false$|null$|this$|let$|do$|if$|else$|whi
 
 RE_SYMBOL = r'{|}|\(|\)|\[|\]|\.|,|;|\+|-|\*|/|&|\||<|>|=|~'
 
-RE_INT_CONST = r'3276[0-7]|327[0-5]\d|32[0-6]\d{2}|3[0-1]\d{3}|[0-2]{4}|\d{1,4}'
+RE_INT_CONST = r'3276[0-7]|327[0-5]\d|32[0-6]\d{2}|3[0-1]\d{3}|[0-2]\d{4}|\d{1,4}'
 
 RE_STRING_CONST = r'\".*\"'
 
