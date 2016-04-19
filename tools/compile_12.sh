@@ -2,7 +2,7 @@
 cd `dirname $0`/..
 project_path=12
 
-for d in `ls $project_path`; do
-    echo "-- " $project_path/$d " --"
-    ./JackCompiler $project_path/$d
+for d in `find $project_path -type d -depth 1 | xargs ls -d`; do
+    echo "-- " $d " --"
+    ./JackCompiler $d
 done
