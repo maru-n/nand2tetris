@@ -7,20 +7,46 @@
  * A library of basic system services.
  */
 class Sys {
+    static int MILLISECOND_CYCLE;
 
     /** Performs all the initializations required by the OS. */
     function void init() {
+        do Keyboard.init();
+        do Math.init();
+        do Memory.init();
+        do Output.init();
+        do Screen.init();
+        let MILLISECOND_CYCLE = 200;
+        do Main.main();
+        do Sys.halt();
+        return;
     }
 
     /** Halts execution. */
     function void halt() {
+        while(true){}
+        return;
     }
 
     /** Waits approximately duration milliseconds and then returns. */
     function void wait(int duration) {
+        var int i, j;
+        let i = 0;
+        while(i<duration){
+            let j = 0;
+            while(j<MILLISECOND_CYCLE){
+                let j = j + 1;
+            }
+            let i = i + 1;
+        }
+        return;
     }
 
     /** Prints the given error code in the form "ERR<errorCode>", and halts. */
     function void error(int errorCode) {
+        do Output.printString("ERR<");
+        do Output.printInt(errorCode);
+        do Output.printString(">");
+        return;
     }
 }
