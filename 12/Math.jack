@@ -7,7 +7,6 @@
  * A basic math library.
  */
 class Math {
-
     static Array twoToThe;
 
     /** Initializes the library. */
