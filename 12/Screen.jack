@@ -7,34 +7,138 @@
  * Graphic screen library.
  */
 class Screen {
-
+    static int SCREEN_MEM_START, SCREEN_MEM_END;
+    static int SCREEN_WORD_WIDTH, SCREEN_WORD_HEIGHT;
+    static boolean color;
+    static Array twoToThe;
     /** Initializes the Screen. */
     function void init() {
+        var int i;
+        let SCREEN_MEM_START = 16384;
+        let SCREEN_MEM_END = 24575;
+        let SCREEN_WORD_WIDTH = 512/16;
+        let SCREEN_WORD_HEIGHT = 256/16;
+        let color = true;
+        let twoToThe = Array.new(16);
+        let twoToThe[0] = 1;
+        let i = 1;
+        while(i < 16) {
+            let twoToThe[i] = twoToThe[i-1] + twoToThe[i-1];
+            let i = i + 1;
+        }
+        return;
     }
 
     /** Erases the whole screen. */
     function void clearScreen() {
+        var int addr;
+        let addr = SCREEN_MEM_START;
+        while(addr < (SCREEN_MEM_END+1)) {
+            do Memory.poke(addr, 0);
+            let addr = addr + 1;
+        }
+        return;
     }
 
     /** Sets the color to be used in further draw commands
      *  where white = false, black = true. */
     function void setColor(boolean b) {
+        let color = b;
+        return;
     }
 
     /** Draws the (x, y) pixel. */
     function void drawPixel(int x, int y) {
+        var int addr, bits;
+        let addr = SCREEN_MEM_START + (y*SCREEN_WORD_WIDTH) + (x/16);
+        if (color) {
+            let bits = twoToThe[x - (x/16*16)] | Memory.peek(addr);
+        } else {
+            let bits = (~twoToThe[x - (x/16*16)]) & Memory.peek(addr);
+        }
+        do Memory.poke(addr, bits);
+        return;
     }
 
     /** Draws a line from (x1, y1) to (x2, y2). */
     function void drawLine(int x1, int y1, int x2, int y2) {
+        var int a, b, da, db, dx, dy, ady_bdx;
+        let a = 0;
+        let b = 0;
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let ady_bdx = 0;
+        while( (Math.abs(a) < (Math.abs(dx)+1)) & (Math.abs(b) < (Math.abs(dy)+1)) ) {
+            do Screen.drawPixel(x1+a, y1+b);
+            if (dx = 0) {
+                if (dy < 0) {
+                    let b = b - 1;
+                } else {
+                    let b = b + 1;
+                }
+            } else { if (dy = 0) {
+                if (dx < 0) {
+                    let a = a - 1;
+                } else {
+                    let a = a + 1;
+                }
+            } else { if((dx>0) & (dy>0)) {
+                if(ady_bdx < 0) {
+                    let a = a + 1;
+                    let ady_bdx = ady_bdx + dy;
+                }else{
+                    let b = b + 1;
+                    let ady_bdx = ady_bdx - dx;
+                }
+            } else { if((dx<0) & (dy>0)) {
+                if(ady_bdx < 0) {
+                    let b = b + 1;
+                    let ady_bdx = ady_bdx - dx;
+                }else{
+                    let a = a - 1;
+                    let ady_bdx = ady_bdx - dy;
+                }
+            } else { if((dx>0) & (dy<0)) {
+                if(ady_bdx < 0) {
+                    let b = b - 1;
+                    let ady_bdx = ady_bdx + dx;
+                }else{
+                    let a = a + 1;
+                    let ady_bdx = ady_bdx + dy;
+                }
+            } else {
+                if(ady_bdx < 0) {
+                    let a = a - 1;
+                    let ady_bdx = ady_bdx - dy;
+                }else{
+                    let b = b - 1;
+                    let ady_bdx = ady_bdx + dx;
+                }
+            }}}}}
+        }
+        return;
     }
 
     /** Draws a filled rectangle where the top left corner
      *  is (x1, y1) and the bottom right corner is (x2, y2). */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
+        var int x;
+        let x = x1;
+        while(x < (x2+1)) {
+            do Screen.drawLine(x, y1, x, y2);
+            let x = x + 1;
+        }
+        return;
     }
 
     /** Draws a filled circle of radius r around (cx, cy). */
     function void drawCircle(int cx, int cy, int r) {
+        var int dy;
+        let dy = -r;
+        while(dy < (r+1)) {
+            do Screen.drawLine(cx - Math.sqrt((r*r)-(dy*dy)), cy+dy, cx + Math.sqrt((r*r)-(dy*dy)), cy+dy );
+            let dy = dy + 1;
+        }
+        return;
     }
 }
