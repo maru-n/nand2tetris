@@ -16,7 +16,7 @@ class Sys {
         do Memory.init();
         do Output.init();
         do Screen.init();
-        let MILLISECOND_CYCLE = 200;
+        let MILLISECOND_CYCLE = 150;
         do Main.main();
         do Sys.halt();
         return;
