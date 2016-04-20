@@ -217,10 +217,9 @@ class Output {
             let rowBits = map[j];
             let i = 0;
             while(i < 8) {
-                do Screen.setColor((rowBits & 1) * true);
+                do Screen.setColor(Math.bit(rowBits, i));
                 do Screen.drawPixel(xOffset+i, yOffset+j);
                 let i = i + 1;
-                let rowBits = rowBits / 2;
             }
             let j = j + 1;
         }
