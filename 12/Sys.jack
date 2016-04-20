@@ -7,16 +7,15 @@
  * A library of basic system services.
  */
 class Sys {
-    static int MILLISECOND_CYCLE;
 
     /** Performs all the initializations required by the OS. */
     function void init() {
-        do Keyboard.init();
-        do Math.init();
         do Memory.init();
+        do Math.init();
+        do Keyboard.init();
         do Output.init();
         do Screen.init();
-        let MILLISECOND_CYCLE = 150;
+
         do Main.main();
         do Sys.halt();
         return;
@@ -34,7 +33,7 @@ class Sys {
         let i = 0;
         while(i<duration){
             let j = 0;
-            while(j<MILLISECOND_CYCLE){
+            while(j<150){
                 let j = j + 1;
             }
             let i = i + 1;
