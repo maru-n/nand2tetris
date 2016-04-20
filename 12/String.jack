@@ -7,54 +7,117 @@
  * Represents a String object. Implements the String type.
  */
 class String {
+    field int length, size;
+    field Array charArray;
 
     /** Constructs a new empty String with a maximum length of maxLength. */
     constructor String new(int maxLength) {
+        let length = 0;
+        let size = maxLength;
+        if (size > 0) {
+            let charArray = Array.new(maxLength);
+        }
+        return this;
     }
 
     /** De-allocates the string and frees its space. */
     method void dispose() {
+        if (size > 0) {
+            do charArray.dispose();
+        }
+        return;
     }
 
     /** Returns the current length of this String. */
     method int length() {
+        return length;
     }
 
     /** Returns the character at location j. */
     method char charAt(int j) {
+        return charArray[j];
     }
 
     /** Sets the j'th character of this string to be c. */
     method void setCharAt(int j, char c) {
+        let charArray[j] = c;
+        return;
     }
 
     /** Appends the character c to the end of this String.
      *  Returns this string as the return value. */
     method String appendChar(char c) {
+        let charArray[length] = c;
+        if (length < size) {
+            let length = length + 1;
+        }
+        return this;
     }
 
     /** Erases the last character from this String. */
     method void eraseLastChar() {
+        if (length > 0) {
+            let length = length - 1;
+        }
+        return;
     }
 
     /** Returns the integer value of this String until the first non
      *  numeric character. */
     method int intValue() {
+        var int i, v, pos_neg;
+        let pos_neg = 1;
+        let v = 0;
+        let i = 0;
+        if (charArray[i] = 45) {
+            let pos_neg = -1;
+            let i = i + 1;
+        }
+        while(i < length) {
+            if ( (47<charArray[i]) & (charArray[i]<58) ) {
+                let v = v*10 + (charArray[i]-48);
+            } else {
+                return pos_neg * v;
+            }
+            let i = i + 1;
+        }
+        return pos_neg * v;
     }
 
     /** Sets this String to hold a representation of the given number. */
     method void setInt(int number) {
+        let length = 0;
+        do appendInt(number);
+        return;
     }
+
+    method void appendInt(int number) {
+        if (number < 0) {
+            do appendChar(45);
+            let number = -number;
+        }
+        if (number < 10) {
+            do appendChar(number+48);
+        } else {
+            do appendInt(number/10);
+            do appendInt(number - (number/10*10));
+        }
+        return;
+    }
+
 
     /** Returns the new line character. */
     function char newLine() {
+        return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+        return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+        return 34;
     }
 }
