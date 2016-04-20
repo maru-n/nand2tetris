@@ -37,4 +37,6 @@ skipped
 
 ### Chapter 12
 
-In progress!
+`12/`
+
+`./tools/compile_12.sh` compile all code on project 12.
